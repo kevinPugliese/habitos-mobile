@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>📲 Plano do dia</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hábitos">
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface2: #283447;
+    --surface3: #334155;
+    --border: #334155;
+    --text: #f1f5f9;
+    --text2: #cbd5e1;
+    --text3: #94a3b8;
+    --accent: #7c6fff;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; padding: 0;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+    font-size: 15px; line-height: 1.4;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px; padding-top: calc(12px + env(safe-area-inset-top));
+    display: flex; align-items: center; gap: 10px;
+  }
+  .h-date {
+    flex: 1; min-width: 0;
+    font-weight: 700; font-size: 1rem; color: var(--text);
+  }
+  .h-date small { display: block; color: var(--text3); font-weight: 400; font-size: .72rem; margin-top: 2px; }
+  .h-actions { display: flex; gap: 6px; align-items: center; }
+  .h-btn {
+    background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 11px; font-size: .8rem;
+    cursor: pointer; font-family: inherit; font-weight: 600;
+  }
+  .h-btn:active { background: var(--surface3); }
+  .h-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .summary {
+    padding: 10px 16px; background: var(--surface);
+    display: flex; gap: 10px; flex-wrap: wrap; font-size: .78rem;
+    border-bottom: 1px solid var(--border); color: var(--text3);
+  }
+  .summary b { color: var(--text); }
+  main { padding: 8px 12px 32px; }
+  .empty {
+    text-align: center; color: var(--text3); padding: 60px 20px;
+    font-size: .9rem;
+  }
+  .slot {
+    display: flex; gap: 10px; padding: 6px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .slot:last-child { border-bottom: 0; }
+  .slot-hour {
+    flex: 0 0 46px; padding-top: 6px;
+    font-weight: 700; color: var(--text3);
+    font-variant-numeric: tabular-nums; text-align: right;
+    font-size: .82rem;
+  }
+  .slot-now .slot-hour { color: var(--accent); }
+  .slot-items {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 10px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 8px;
+    cursor: pointer; user-select: none; min-height: 44px;
+    transition: background .12s;
+  }
+  .item:active { background: var(--surface2); }
+  .item.done { opacity: .55; background: rgba(16,185,129,.06); border-color: rgba(16,185,129,.3); }
+  .item.done .item-name { text-decoration: line-through; }
+  .item-check {
+    flex: 0 0 22px; width: 22px; height: 22px;
+    border-radius: 50%; border: 2px solid var(--border);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: transparent; font-weight: 800; font-size: .9rem;
+    transition: all .12s;
+  }
+  .item.done .item-check {
+    background: var(--success); border-color: var(--success); color: #fff;
+  }
+  .item-icon { flex: 0 0 auto; font-size: 1.05rem; }
+  .item-name {
+    flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-weight: 600; font-size: .92rem;
+  }
+  .item-meta {
+    flex: 0 0 auto; color: var(--text3); font-size: .7rem;
+    font-variant-numeric: tabular-nums; text-align: right;
+  }
+  .now-line {
+    height: 2px; background: var(--accent); margin: 4px 0;
+    position: relative;
+  }
+  .now-line::before {
+    content: 'agora'; position: absolute;
+    left: 6px; top: -8px; padding: 1px 6px;
+    background: var(--accent); color: #fff;
+    font-size: .62rem; font-weight: 700;
+    border-radius: 999px; letter-spacing: .04em;
+  }
+  /* Type-specific tints */
+  .item[data-t="habit"] { border-left: 3px solid #f59e0b; }
+  .item[data-t="task"] { border-left: 3px solid #94a3b8; }
+  .item[data-t="mtg"] { border-left: 3px solid #2dd4bf; }
+  .item[data-t="study"] { border-left: 3px solid #a78bfa; }
+  .item[data-t="desc"] { border-left: 3px solid #a78bfa; }
+  .item[data-t="tabfocus"] { border-left: 3px solid #7c6fff; }
+  .item[data-t="exp"] { border-left: 3px solid #f97316; }
+  .item[data-t="wd"] { border-left: 3px solid #f59e0b; }
+  .item[data-t="trip"] { border-left: 3px solid #38bdf8; }
+  .item[data-t="tripitem"] { border-left: 3px solid #38bdf8; }
+  .item[data-t="proj"] { border-left: 3px solid #7c6fff; }
+  .item[data-t="run"] { border-left: 3px solid #f472b6; }
+  .item[data-t="sleep"] { border-left: 3px solid #6366f1; }
+  .item[data-t="event"] { border-left: 3px solid #2dd4bf; }
+  .item[data-t="adhoc"] { border-left: 3px solid #10b981; }
+  .wd-block {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 10px; margin-bottom: 10px;
+  }
+  .wd-block-head {
+    font-size: .74rem; font-weight: 700; color: var(--text3);
+    text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;
+  }
+  .wd-block-head:active { color: var(--text); }
+  .wd-block-head .chev { margin-left: auto; font-size: .82rem; transition: transform .15s; }
+  .wd-block.collapsed .chev { transform: rotate(-90deg); }
+  .wd-block.collapsed .wd-list { display: none; }
+  .wd-block-head .ct { color: var(--text2); font-weight: 600; text-transform: none; letter-spacing: 0; font-size: .76rem; }
+
+  /* ─── Slot collapse ─── */
+  .slot-collapse {
+    flex: 0 0 auto;
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text3);
+    border-radius: 6px; padding: 2px 7px; font-size: .68rem;
+    cursor: pointer; font-family: inherit; align-self: flex-start; margin-top: 6px;
+  }
+  .slot-collapse:active { background: var(--surface3); }
+  .slot.collapsed .slot-items > .item { display: none; }
+  .slot.collapsed .slot-items > .item.collapsed-summary { display: flex; }
+  .item.collapsed-summary {
+    background: var(--surface2); border-style: dashed; cursor: pointer;
+    color: var(--text2); font-weight: 600;
+  }
+
+  /* ─── Filtros (sheet) ─── */
+  .filter-chips {
+    display: flex; gap: 6px; padding: 8px 12px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  .filter-chip {
+    flex: 0 0 auto;
+    background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
+    border-radius: 999px; padding: 6px 12px; font-size: .76rem; font-weight: 600;
+    cursor: pointer; font-family: inherit; white-space: nowrap;
+  }
+  .filter-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .filter-chip.clear { color: var(--text3); }
+
+  /* ─── Ad-hoc sheet (cadastro de tarefa feita) ─── */
+  .field-label { display: block; font-size: .76rem; font-weight: 700; color: var(--text2); margin: 10px 0 4px; }
+  .field-input {
+    width: 100%; padding: 10px 12px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-family: inherit; font-size: .9rem;
+    box-sizing: border-box; outline: none;
+  }
+  .field-input:focus { border-color: var(--accent); }
+  .adhoc-quick {
+    display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;
+  }
+  .adhoc-quick button {
+    flex: 1; min-width: 60px;
+    background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px; font-size: .78rem; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+  }
+  .adhoc-quick button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ─── Banner de instalação PWA ─── */
+  .install-banner {
+    display: none;
+    align-items: center; gap: 10px;
+    padding: 10px 14px; margin: 8px 12px 0;
+    background: linear-gradient(135deg, rgba(124,111,255,.18), rgba(16,185,129,.14));
+    border: 1px solid rgba(124,111,255,.45); border-radius: 10px;
+    color: var(--text);
+  }
+  .install-banner.show { display: flex; }
+  .install-banner-icon { font-size: 1.4rem; }
+  .install-banner-body { flex: 1; min-width: 0; }
+  .install-banner-title { font-weight: 700; font-size: .88rem; }
+  .install-banner-sub { font-size: .72rem; color: var(--text3); margin-top: 2px; }
+  .install-banner-btn {
+    background: var(--accent); color: #fff; border: 0; border-radius: 8px;
+    padding: 8px 14px; font-weight: 700; font-size: .82rem;
+    cursor: pointer; font-family: inherit; flex: 0 0 auto;
+  }
+  .install-banner-x {
+    background: transparent; border: 0; color: var(--text3);
+    cursor: pointer; font-size: 1.2rem; padding: 4px 8px; flex: 0 0 auto;
+  }
+  /* iOS install sheet — instruções */
+  .ios-install-steps li { margin: 8px 0; line-height: 1.45; font-size: .9rem; }
+  .ios-install-steps b { color: var(--accent); }
+  .ios-share-icon {
+    display: inline-block; vertical-align: middle;
+    width: 18px; height: 18px;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 4px;
+    text-align: center; font-size: .8rem; line-height: 18px;
+  }
+
+  /* ─── Score total no summary ─── */
+  .score-pill {
+    background: rgba(124,111,255,.18); color: var(--accent);
+    border: 1px solid rgba(124,111,255,.4);
+    padding: 2px 9px; border-radius: 999px; font-weight: 700; font-size: .74rem;
+  }
+  /* Export checks modal */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.6);
+    z-index: 50; display: none; align-items: flex-end; justify-content: center;
+    padding: 0;
+  }
+  .overlay.open { display: flex; }
+  .sheet {
+    background: var(--surface); border-top-left-radius: 16px; border-top-right-radius: 16px;
+    width: 100%; max-width: 600px;
+    padding: 14px 16px; padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    border: 1px solid var(--border); border-bottom: 0;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .sheet h3 { margin: 0 0 8px; font-size: 1rem; }
+  .sheet .info { color: var(--text3); font-size: .8rem; margin-bottom: 10px; }
+  .sheet textarea {
+    width: 100%; min-height: 200px; padding: 10px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: .82rem; resize: vertical; box-sizing: border-box;
+  }
+  .sheet-actions {
+    display: flex; gap: 8px; margin-top: 10px;
+  }
+  .sheet-actions button { flex: 1; }
+  .toast {
+    position: fixed; bottom: calc(20px + env(safe-area-inset-bottom));
+    left: 50%; transform: translateX(-50%);
+    background: var(--surface3); color: var(--text);
+    padding: 10px 18px; border-radius: 999px;
+    font-size: .82rem; font-weight: 600;
+    border: 1px solid var(--border);
+    z-index: 100;
+    opacity: 0; transition: opacity .2s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ─── Treino do dia (card no topo) ─── */
+  .wk-card {
+    margin: 10px 12px 0;
+    background: linear-gradient(135deg, rgba(244,63,94,.12), rgba(124,111,255,.08));
+    border: 1px solid rgba(244,63,94,.35); border-radius: 10px;
+    padding: 12px 14px; display: flex; align-items: center; gap: 12px;
+    cursor: pointer; user-select: none;
+  }
+  .wk-card:active { background: rgba(244,63,94,.18); }
+  .wk-card.done { opacity: .65; }
+  .wk-card-icon { font-size: 1.6rem; flex: 0 0 auto; }
+  .wk-card-body { flex: 1; min-width: 0; }
+  .wk-card-title { font-weight: 700; font-size: .95rem; }
+  .wk-card-meta { font-size: .74rem; color: var(--text3); margin-top: 3px; }
+  .wk-card-btn {
+    background: var(--accent); color: #fff; border: 0; border-radius: 8px;
+    padding: 9px 14px; font-weight: 700; font-size: .82rem;
+    cursor: pointer; font-family: inherit; flex: 0 0 auto;
+  }
+  .wk-card-btn:active { transform: scale(.97); }
+
+  /* ─── Execução do treino (full-screen) ─── */
+  .wk-exec {
+    position: fixed; inset: 0; z-index: 70;
+    background: var(--bg); display: none; flex-direction: column;
+    overflow: hidden;
+  }
+  .wk-exec.open { display: flex; }
+  .wk-exec-head {
+    position: sticky; top: 0; z-index: 5;
+    padding: 10px 14px; padding-top: calc(10px + env(safe-area-inset-top));
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .wk-exec-title { flex: 1; min-width: 0; font-weight: 700; font-size: .95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wk-exec-close {
+    background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 11px; font-size: .82rem; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+  .wk-exec-totals {
+    padding: 8px 14px; background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; gap: 14px; font-size: .8rem; color: var(--text2);
+    font-variant-numeric: tabular-nums;
+  }
+  .wk-exec-totals b { color: var(--text); }
+  .wk-rest-bar {
+    background: var(--warning); color: #1a1206;
+    padding: 10px 14px; display: none;
+    align-items: center; gap: 10px;
+    font-weight: 700; font-size: .95rem;
+    border-bottom: 1px solid rgba(0,0,0,.2);
+  }
+  .wk-rest-bar.show { display: flex; }
+  .wk-rest-bar.done { background: var(--success); color: #03240f; }
+  .wk-rest-num { font-size: 1.5rem; font-variant-numeric: tabular-nums; flex: 1; }
+  .wk-rest-actions { display: flex; gap: 6px; }
+  .wk-rest-btn {
+    background: rgba(0,0,0,.18); color: inherit; border: 0;
+    border-radius: 6px; padding: 6px 10px; font-size: .82rem;
+    font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .wk-exec-body { flex: 1; overflow-y: auto; padding: 12px 12px 24px; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+  .wk-ex {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px; margin-bottom: 10px;
+  }
+  .wk-ex-head {
+    display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px;
+  }
+  .wk-ex-name { font-weight: 700; font-size: .95rem; flex: 1; min-width: 0; }
+  .wk-ex-mg { font-size: .72rem; color: var(--text3); }
+  .wk-ex-rest { font-size: .68rem; color: var(--text3); margin-top: 2px; }
+  .wk-set-row {
+    display: grid; grid-template-columns: 28px 1fr 1fr 38px 32px; gap: 6px;
+    align-items: center; padding: 6px 0;
+  }
+  .wk-set-row + .wk-set-row { border-top: 1px dashed var(--border); }
+  .wk-set-num { font-weight: 700; color: var(--text3); font-size: .82rem; text-align: center; }
+  .wk-set-input {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px; color: var(--text);
+    font-family: inherit; font-size: .9rem; text-align: center;
+    width: 100%; min-width: 0; box-sizing: border-box; outline: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .wk-set-input:focus { border-color: var(--accent); }
+  .wk-set-row.done .wk-set-input { opacity: .55; }
+  .wk-set-check {
+    background: var(--surface2); border: 2px solid var(--border);
+    border-radius: 6px; width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    color: transparent; font-weight: 800; cursor: pointer; user-select: none;
+  }
+  .wk-set-row.done .wk-set-check { background: var(--success); border-color: var(--success); color: #fff; }
+  .wk-set-rm {
+    background: transparent; border: 0; color: var(--text3);
+    cursor: pointer; font-size: .9rem; padding: 4px;
+  }
+  .wk-set-rm:active { color: var(--danger); }
+  .wk-set-head {
+    display: grid; grid-template-columns: 28px 1fr 1fr 38px 32px; gap: 6px;
+    font-size: .65rem; color: var(--text3); text-transform: uppercase;
+    letter-spacing: .04em; margin-bottom: 4px; padding: 0 2px;
+  }
+  .wk-set-head span { text-align: center; }
+  .wk-ex-actions {
+    margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .wk-ex-actions button {
+    background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 10px; font-size: .76rem; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+  }
+  .wk-ex-actions button:active { background: var(--surface3); }
+  .wk-rest-input {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 6px; padding: 4px 6px; width: 56px; font-family: inherit;
+    font-size: .78rem; text-align: center; margin-left: 6px;
+  }
+  .wk-exec-foot {
+    padding: 10px 14px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+    background: var(--surface); border-top: 1px solid var(--border);
+    display: flex; gap: 8px;
+  }
+  .wk-exec-foot button {
+    flex: 1; padding: 12px; border: 0; border-radius: 8px;
+    font-weight: 700; font-size: .92rem; cursor: pointer; font-family: inherit;
+  }
+  .wk-btn-start { background: var(--accent); color: #fff; }
+  .wk-btn-finish { background: var(--success); color: #fff; }
+  .wk-btn-pause { background: var(--surface2); color: var(--text2); border: 1px solid var(--border) !important; }
+
+  /* ─── Finalizar: tela de export ─── */
+  .wk-done-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; margin-bottom: 12px;
+  }
+  .wk-done-stat { display: flex; justify-content: space-between; padding: 5px 0; font-size: .88rem; }
+  .wk-done-stat b { color: var(--text); }
+  .wk-done-stat .lbl { color: var(--text3); }
+
+  /* Scanner */
+  .scan-overlay {
+    position: fixed; inset: 0; z-index: 60;
+    background: #000; display: none; flex-direction: column;
+  }
+  .scan-overlay.open { display: flex; }
+  .scan-head {
+    padding: 12px 16px; padding-top: calc(12px + env(safe-area-inset-top));
+    background: rgba(0,0,0,.7); color: #fff;
+    display: flex; align-items: center; gap: 10px;
+    font-size: .92rem; font-weight: 700;
+  }
+  .scan-head .scan-close {
+    margin-left: auto;
+    background: rgba(255,255,255,.12); color: #fff; border: 0;
+    padding: 7px 12px; border-radius: 8px; font-size: .9rem;
+    cursor: pointer; font-family: inherit;
+  }
+  .scan-video-wrap {
+    flex: 1; min-height: 0; position: relative;
+    display: flex; align-items: center; justify-content: center;
+    background: #000;
+  }
+  .scan-video-wrap video {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .scan-frame {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: min(80vw, 60vh); aspect-ratio: 1 / 1;
+    border: 3px solid rgba(255,255,255,.7);
+    border-radius: 16px;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,.35);
+    pointer-events: none;
+  }
+  .scan-hint {
+    padding: 12px 18px; color: #fff; text-align: center; font-size: .82rem;
+    background: rgba(0,0,0,.7); line-height: 1.4;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+  .scan-paste-row {
+    margin-top: 10px; display: flex; gap: 6px;
+  }
+  .scan-photo-btn {
+    display: inline-block; margin-top: 8px;
+    background: rgba(255,255,255,.14); color: #fff;
+    border: 1px solid rgba(255,255,255,.3);
+    padding: 10px 16px; border-radius: 10px;
+    font-weight: 700; font-size: .88rem;
+    cursor: pointer; font-family: inherit;
+  }
+  .scan-photo-btn:active { background: rgba(255,255,255,.24); }
+  .scan-hint input[type=text] {
+    flex: 1; padding: 9px 12px; background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.25); border-radius: 8px;
+    color: #fff; font-family: inherit; font-size: .82rem; outline: none;
+    min-width: 0;
+  }
+  .scan-hint input[type=text]::placeholder { color: rgba(255,255,255,.5); }
+  .scan-hint button {
+    background: var(--accent); color: #fff; border: 0;
+    padding: 9px 14px; border-radius: 8px; font-weight: 700;
+    cursor: pointer; font-family: inherit; font-size: .82rem;
+  }
+  .scan-error {
+    color: #fca5a5; font-size: .82rem; padding: 14px;
+    text-align: center; max-width: 360px; margin: 0 auto;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-date" id="dateLabel">—</div>
+  <div class="h-actions">
+    <button class="h-btn primary" onclick="openScanner()" title="Escanear QR Code do desktop">📷</button>
+    <button class="h-btn" onclick="openAdhocSheet()" title="Cadastrar tarefa feita ad-hoc">➕</button>
+    <button class="h-btn" onclick="openExportSheet()" title="Repassar checks pro desktop">📋</button>
+    <button class="h-btn" onclick="location.reload()" title="Recarregar">↻</button>
+  </div>
+</header>
+
+<div class="summary" id="summary"></div>
+
+<!-- Banner de instalação PWA -->
+<div class="install-banner" id="installBanner">
+  <span class="install-banner-icon">📲</span>
+  <div class="install-banner-body">
+    <div class="install-banner-title">Instalar Hábitos no celular</div>
+    <div class="install-banner-sub" id="installBannerSub">Funciona offline, abre como app.</div>
+  </div>
+  <button class="install-banner-btn" onclick="triggerInstall()">Instalar</button>
+  <button class="install-banner-x" onclick="dismissInstall()" title="Dispensar">✕</button>
+</div>
+
+<!-- Sheet com instruções iOS (Safari não tem prompt nativo) -->
+<div class="overlay" id="iosInstallSheet" onclick="if(event.target===this)closeIosInstallSheet()">
+  <div class="sheet">
+    <h3>📲 Instalar no iPhone / iPad</h3>
+    <div class="info">O Safari não tem botão automático — siga estes passos:</div>
+    <ol class="ios-install-steps">
+      <li>Toque no ícone <b>Compartilhar</b> <span class="ios-share-icon">⇪</span> no rodapé do Safari.</li>
+      <li>Role pra baixo e toque em <b>Adicionar à Tela de Início</b>.</li>
+      <li>Confirme em <b>Adicionar</b> no canto superior direito.</li>
+    </ol>
+    <div class="info">O app vai abrir em tela cheia, sem barra de navegação, e funciona offline com os dados do último QR.</div>
+    <div class="sheet-actions">
+      <button class="h-btn primary" onclick="closeIosInstallSheet()">Entendi</button>
+    </div>
+  </div>
+</div>
+
+<div class="filter-chips" id="filterChips"></div>
+
+<div id="wkCard"></div>
+
+<!-- ─── Sheet: cadastro de tarefa feita ad-hoc ─── -->
+<div class="overlay" id="adhocSheet" onclick="if(event.target===this)closeAdhocSheet()">
+  <div class="sheet">
+    <h3 id="adhocSheetTitle">➕ Tarefa feita</h3>
+    <div class="info">Cadastra uma tarefa que você fez agora — vai pro export junto com os checks.</div>
+    <label class="field-label">O que você fez</label>
+    <input type="text" id="adhocText" class="field-input" placeholder="Ex: Liguei pro cliente, organizei documentos…" maxlength="120">
+    <label class="field-label">Pontuação</label>
+    <input type="number" id="adhocScore" class="field-input" inputmode="numeric" min="0" step="10" value="50">
+    <div class="adhoc-quick">
+      <button type="button" data-sc="10" onclick="adhocSetScore(10)">10</button>
+      <button type="button" data-sc="25" onclick="adhocSetScore(25)">25</button>
+      <button type="button" data-sc="50" onclick="adhocSetScore(50)">50</button>
+      <button type="button" data-sc="100" onclick="adhocSetScore(100)">100</button>
+      <button type="button" data-sc="200" onclick="adhocSetScore(200)">200</button>
+    </div>
+    <div class="sheet-actions">
+      <button class="h-btn primary" onclick="saveAdhoc()">Salvar</button>
+      <button class="h-btn" onclick="closeAdhocSheet()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<main id="timeline"><div class="empty">Carregando…</div></main>
+
+<!-- ─── Execução do treino (full-screen overlay) ─── -->
+<div class="wk-exec" id="wkExec">
+  <div class="wk-exec-head">
+    <div class="wk-exec-title" id="wkExecTitle">Treino</div>
+    <button class="wk-exec-close" onclick="closeWkExec()">Fechar ✕</button>
+  </div>
+  <div class="wk-exec-totals" id="wkExecTotals"></div>
+  <div class="wk-rest-bar" id="wkRestBar">
+    <span class="wk-rest-num" id="wkRestNum">00:00</span>
+    <div class="wk-rest-actions">
+      <button class="wk-rest-btn" onclick="wkRestAdjust(-15)">−15s</button>
+      <button class="wk-rest-btn" onclick="wkRestAdjust(15)">+15s</button>
+      <button class="wk-rest-btn" onclick="wkRestSkip()">Pular</button>
+    </div>
+  </div>
+  <div class="wk-exec-body" id="wkExecBody"></div>
+  <div class="wk-exec-foot" id="wkExecFoot"></div>
+</div>
+
+<div class="overlay" id="exportSheet" onclick="if(event.target===this)closeExportSheet()">
+  <div class="sheet">
+    <h3>📋 Repassar checks pro desktop</h3>
+    <div class="info">Copie a lista abaixo e marque manualmente no app desktop.</div>
+    <textarea id="exportText" readonly></textarea>
+    <div class="sheet-actions">
+      <button class="h-btn primary" onclick="copyExport()">Copiar</button>
+      <button class="h-btn" onclick="closeExportSheet()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="scan-overlay" id="scanOverlay">
+  <div class="scan-head">
+    <span>📷 Escanear QR</span>
+    <button class="scan-close" onclick="closeScanner()">Fechar ✕</button>
+  </div>
+  <div class="scan-video-wrap" id="scanVideoWrap">
+    <video id="scanVideo" playsinline muted autoplay></video>
+    <div class="scan-frame"></div>
+  </div>
+  <div class="scan-hint">
+    <div id="scanStatus">Aponte a câmera pro QR Code do desktop…</div>
+    <input type="file" id="scanPhoto" accept="image/*" capture="environment" style="display:none" onchange="onPhotoSelected(this)">
+    <button class="scan-photo-btn" type="button" onclick="document.getElementById('scanPhoto').click()">📁 Tirar foto do QR</button>
+    <div class="scan-paste-row">
+      <input type="text" id="scanPaste" placeholder="ou cole a URL aqui">
+      <button onclick="acceptPastedUrl()">Carregar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  // ─── Elementos ─────────────────────────────────────────────────
+  const root        = document.getElementById('timeline');
+  const summaryEl   = document.getElementById('summary');
+  const dateLabelEl = document.getElementById('dateLabel');
+  const DOW_LBL = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const MES_LBL = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const LAST_PAYLOAD_KEY = 'mobileLastPayload';
+
+  // ─── Estado ────────────────────────────────────────────────────
+  let view = null;            // { v, d, items: [...] }
+  let localChecks = {};       // { [itemKey]: 0|1 }
+
+  // ─── Helpers ───────────────────────────────────────────────────
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2000);
+  }
+  // mantida inline (mobile.html é standalone, pode rodar via file://)
+  // fonte canonical: ../js/compression.js — comportamento idêntico, coberto por test/compression.test.js
+  async function gunzipB64Url(b64) {
+    const std = b64.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = std.length % 4 ? '='.repeat(4 - (std.length % 4)) : '';
+    const bin = atob(std + pad);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+    const buf = await new Response(stream).arrayBuffer();
+    return new TextDecoder().decode(buf);
+  }
+  // Aceita URL completa, "#d=..", "d=.." ou base64url puro. Retorna o base64 ou null.
+  function extractPayload(text) {
+    if (!text) return null;
+    const s = String(text).trim();
+    const m1 = s.match(/#d=([A-Za-z0-9_\-]+)/);
+    if (m1) return m1[1];
+    const m2 = s.match(/^d=([A-Za-z0-9_\-]+)$/);
+    if (m2) return m2[1];
+    if (/^[A-Za-z0-9_\-]{40,}$/.test(s)) return s;
+    return null;
+  }
+
+  // ─── Estado local de checks ────────────────────────────────────
+  function loadLocalChecks(date) {
+    try { localChecks = JSON.parse(localStorage.getItem('mobileChecks:' + date) || '{}'); }
+    catch { localChecks = {}; }
+  }
+  function saveLocalChecks(date) {
+    localStorage.setItem('mobileChecks:' + date, JSON.stringify(localChecks));
+  }
+  function itemKey(it, ix) { return it.h + '|' + (it.time||'') + '|' + (it.t||'') + '|' + it.n + '|' + ix; }
+  function isDone(it, ix) {
+    const k = itemKey(it, ix);
+    if (k in localChecks) return !!localChecks[k];
+    return !!it.x;
+  }
+  function setDone(it, ix, val) {
+    localChecks[itemKey(it, ix)] = val ? 1 : 0;
+    saveLocalChecks(view.d);
+  }
+
+  // ─── Carga de payload ──────────────────────────────────────────
+  async function loadPayload(b64) {
+    try {
+      const json = await gunzipB64Url(b64);
+      const parsed = JSON.parse(json);
+      if (!parsed || !Array.isArray(parsed.items)) throw new Error('Payload inválido');
+      view = parsed;
+      localStorage.setItem(LAST_PAYLOAD_KEY, b64);
+      history.replaceState(null, '', '#d=' + b64);
+      loadLocalChecks(view.d);
+      loadAdhoc(view.d);
+      loadCollapse(view.d);
+      loadFilter();
+      initDateLabel();
+      renderFilterChips();
+      render();
+      return true;
+    } catch (e) {
+      root.innerHTML = '<div class="empty">Erro ao decodificar: ' + esc(String(e.message || e)) + '</div>';
+      return false;
+    }
+  }
+
+  function initDateLabel() {
+    if (!view) return;
+    const [yy, mm, dd] = (view.d || '').split('-').map(Number);
+    const dt = new Date(yy || 2000, (mm||1)-1, dd||1);
+    dateLabelEl.innerHTML = (DOW_LBL[dt.getDay()] || '') +
+      ' <small>' + (dd || '') + ' ' + (MES_LBL[(mm||1)-1] || '') + ' ' + (yy || '') + '</small>';
+  }
+
+  function showEmptyState() {
+    dateLabelEl.textContent = '📲 Plano do dia';
+    summaryEl.innerHTML = '';
+    root.innerHTML = '<div class="empty">' +
+      '📷 Toque no botão <b>📷</b> no topo pra escanear o QR Code do desktop.<br><br>' +
+      '<small>Ou cole a URL completa lá no scanner depois de abrir.</small>' +
+      '</div>';
+  }
+
+  // ─── Estado adicional: ad-hoc / collapse / filtros ─────────────
+  let adhocTasks = []; // [{ id, text, score, doneAt }]
+  let collapse  = { wd: false, slots: [] }; // collapsed slots by hour
+  let activeFilter = null;        // null = todos; string = tipo único
+  const FILTERS_KEY = 'mobileFilters';
+
+  // Map tipo → label/ícone curto pros chips de filtro
+  const FILTER_DEFS = [
+    { t: null,       label: 'Todos', icon: '☰' },
+    { t: 'habit',    label: 'Hábito', icon: '🔁' },
+    { t: 'task',     label: 'Tarefa', icon: '⭐' },
+    { t: 'adhoc',    label: 'Ad-hoc', icon: '➕' },
+    { t: 'wd',       label: 'Rotina', icon: '⚡' },
+    { t: 'mtg',      label: 'Reunião', icon: '📅' },
+    { t: 'study',    label: 'Estudo', icon: '🎓' },
+    { t: 'proj',     label: 'Projeto', icon: '📁' },
+    { t: 'trip',     label: 'Viagem', icon: '✈️' },
+    { t: 'tripitem', label: 'Item viagem', icon: '🧳' },
+    { t: 'run',      label: 'Cardio', icon: '🏃' },
+    { t: 'tabfocus', label: 'Foco', icon: '🎯' },
+    { t: 'desc',     label: 'Desc. dia', icon: '📝' },
+    { t: 'sleep',    label: 'Sono', icon: '🌙' },
+    { t: 'event',    label: 'Evento', icon: '📌' },
+    { t: 'exp',      label: 'Pagamento', icon: '💸' },
+  ];
+
+  function adhocKey(date) { return 'mobileAdhoc:' + date; }
+  function collapseKey(date) { return 'mobileCollapse:' + date; }
+
+  function loadAdhoc(date) {
+    try { adhocTasks = JSON.parse(localStorage.getItem(adhocKey(date)) || '[]'); }
+    catch { adhocTasks = []; }
+    if (!Array.isArray(adhocTasks)) adhocTasks = [];
+  }
+  function saveAdhocList(date) {
+    try { localStorage.setItem(adhocKey(date), JSON.stringify(adhocTasks)); } catch {}
+  }
+  function loadCollapse(date) {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(collapseKey(date)) || '{}');
+      collapse = { wd: !!parsed.wd, slots: Array.isArray(parsed.slots) ? parsed.slots : [] };
+    } catch { collapse = { wd: false, slots: [] }; }
+  }
+  function saveCollapse(date) {
+    try { localStorage.setItem(collapseKey(date), JSON.stringify(collapse)); } catch {}
+  }
+  function loadFilter() {
+    try { activeFilter = localStorage.getItem(FILTERS_KEY) || null; }
+    catch { activeFilter = null; }
+    if (activeFilter === 'null') activeFilter = null;
+  }
+  function saveFilter() {
+    try {
+      if (activeFilter) localStorage.setItem(FILTERS_KEY, activeFilter);
+      else localStorage.removeItem(FILTERS_KEY);
+    } catch {}
+  }
+
+  // ─── Filtro chips render ───────────────────────────────────────
+  function renderFilterChips() {
+    const wrap = document.getElementById('filterChips');
+    if (!wrap) return;
+    // Quais tipos efetivamente existem no payload? Esconde os vazios.
+    const present = new Set();
+    if (view) view.items.forEach(it => present.add(it.t));
+    if (adhocTasks.length) present.add('adhoc');
+    let html = '';
+    for (const f of FILTER_DEFS) {
+      if (f.t !== null && !present.has(f.t)) continue;
+      const cls = (activeFilter === f.t) ? 'filter-chip active' : 'filter-chip';
+      html += `<button class="${cls}" onclick="setFilter(${f.t === null ? 'null' : `'${f.t}'`})">${f.icon} ${f.label}</button>`;
+    }
+    wrap.innerHTML = html;
+  }
+  window.setFilter = function (t) {
+    activeFilter = t;
+    saveFilter();
+    render();
+  };
+
+  // ─── Render principal ──────────────────────────────────────────
+  function render() {
+    if (!view) { showEmptyState(); return; }
+    const filterT = activeFilter;
+    const passFilter = (t) => !filterT || filterT === t;
+
+    const wd = view.items.filter(it => it.h < 0);
+    const timed = view.items.filter(it => it.h >= 0);
+
+    const byHour = new Map();
+    timed.forEach((it) => {
+      const realIx = view.items.indexOf(it);
+      if (!byHour.has(it.h)) byHour.set(it.h, []);
+      byHour.get(it.h).push({ it, ix: realIx });
+    });
+
+    const now = new Date();
+    const isTodayLoaded = view.d === now.toISOString().slice(0,10);
+    const curH = isTodayLoaded ? now.getHours() : -1;
+
+    let html = '';
+    let scoreTotal = 0;
+
+    // ── Bloco wd (rotinas) com collapse ──────────────────────────
+    if (wd.length && passFilter('wd')) {
+      let wdDone = 0;
+      const itemsHtml = wd.map(it => {
+        const realIx = view.items.indexOf(it);
+        const wdInfo = it.wd || { cur: 0, target: 1 };
+        const isMultiOrDone = wdInfo.cur >= wdInfo.target;
+        const done = isDone(it, realIx) || isMultiOrDone;
+        if (done) { wdDone++; if (it.sc) scoreTotal += it.sc; }
+        const score = it.sc ? ' +' + it.sc + 'pts' : '';
+        const progress = wdInfo.target > 1 ? ' (' + wdInfo.cur + '/' + wdInfo.target + ')' : '';
+        return '<div class="item ' + (done?'done':'') + '" data-t="wd" data-ix="' + realIx + '" onclick="toggle(' + realIx + ')">' +
+          '<span class="item-check">✓</span>' +
+          '<span class="item-name">' + esc(it.n) + progress + '</span>' +
+          '<span class="item-meta">' + score + '</span>' +
+        '</div>';
+      }).join('');
+      const cls = 'wd-block' + (collapse.wd ? ' collapsed' : '');
+      html += '<div class="' + cls + '">' +
+        '<div class="wd-block-head" onclick="toggleWdCollapse()">' +
+          '<span>⚡ Rotinas diárias</span>' +
+          '<span class="ct">' + wdDone + '/' + wd.length + '</span>' +
+          '<span class="chev">⌄</span>' +
+        '</div>' +
+        '<div class="wd-list">' + itemsHtml + '</div>' +
+      '</div>';
+    }
+
+    // ── Ad-hoc tasks (cadastradas no celular) ────────────────────
+    if (adhocTasks.length && passFilter('adhoc')) {
+      const itemsHtml = adhocTasks.map(at => {
+        scoreTotal += Number(at.score) || 0;
+        const sc = at.score ? ' +' + at.score + 'pts' : '';
+        const meta = at.doneAt ? ' · ' + String(at.doneAt).slice(11,16) : '';
+        return '<div class="item done" data-t="adhoc" data-aid="' + esc(at.id) + '">' +
+          '<span class="item-check">✓</span>' +
+          '<span class="item-icon">➕</span>' +
+          '<span class="item-name">' + esc(at.text) + '</span>' +
+          '<span class="item-meta">' + esc(meta + sc) + '</span>' +
+          '<button class="slot-collapse" style="margin:0 0 0 4px" onclick="event.stopPropagation();removeAdhoc(\'' + esc(at.id) + '\')" title="Remover">✕</button>' +
+        '</div>';
+      }).join('');
+      html += '<div class="wd-block"><div class="wd-block-head" style="cursor:default">' +
+        '<span>➕ Tarefas feitas no celular</span>' +
+        '<span class="ct">' + adhocTasks.length + '</span>' +
+      '</div><div class="wd-list">' + itemsHtml + '</div></div>';
+    }
+
+    // ── Slots por hora ───────────────────────────────────────────
+    const hours = [...byHour.keys()].sort((a,b) => a - b);
+    let nowLineInserted = false;
+    let timedCount = 0, timedDone = 0;
+    for (const h of hours) {
+      const itemsHere = byHour.get(h).filter(({ it }) => passFilter(it.t));
+      if (!itemsHere.length) continue;
+      if (isTodayLoaded && !nowLineInserted && h > curH && curH >= 0) {
+        html += '<div class="now-line"></div>';
+        nowLineInserted = true;
+      }
+      const isNow = h === curH;
+      const isCollapsed = collapse.slots.includes(h);
+      const slotCls = 'slot' + (isNow?' slot-now':'') + (isCollapsed && itemsHere.length >= 2 ? ' collapsed' : '');
+      let slotItems = '';
+      let slotDone = 0;
+      for (const { it, ix } of itemsHere) {
+        timedCount++;
+        const done = isDone(it, ix);
+        if (done) { slotDone++; timedDone++; if (it.sc) scoreTotal += it.sc; }
+        const time = it.time || '';
+        const dur = it.dur ? ' · ' + it.dur + 'min' : '';
+        const score = it.sc ? ' · +' + it.sc + 'pts' : '';
+        const hhmm = String(h).padStart(2,'0') + ':00';
+        const meta = (time && time !== hhmm) ? (time + dur + score) : (dur + score).trim();
+        const icon = it.ic || '';
+        slotItems += '<div class="item ' + (done?'done':'') + '" data-t="' + esc(it.t) + '" data-ix="' + ix + '" onclick="toggle(' + ix + ')">' +
+          '<span class="item-check">✓</span>' +
+          (icon ? '<span class="item-icon">' + esc(icon) + '</span>' : '') +
+          '<span class="item-name">' + esc(it.n) + '</span>' +
+          '<span class="item-meta">' + esc(meta) + '</span>' +
+        '</div>';
+      }
+      // Summary item visível só quando collapsed
+      if (itemsHere.length >= 2) {
+        slotItems += '<div class="item collapsed-summary" onclick="toggleSlotCollapse(' + h + ')">' +
+          '<span class="item-check"></span>' +
+          '<span class="item-name">' + slotDone + '/' + itemsHere.length + ' item' + (itemsHere.length===1?'':'s') + ' nesta hora — toque pra expandir</span>' +
+          '<span class="item-meta">⌄</span>' +
+        '</div>';
+      }
+      const collapseBtn = itemsHere.length >= 2
+        ? '<button class="slot-collapse" onclick="toggleSlotCollapse(' + h + ')" title="' + (isCollapsed?'Expandir':'Colapsar') + ' essa hora">' + (isCollapsed?'⌄':'⌃') + '</button>'
+        : '';
+      html += '<div class="' + slotCls + '"><div class="slot-hour">' + String(h).padStart(2,'0') + 'h</div><div class="slot-items">' + slotItems + collapseBtn + '</div></div>';
+    }
+    if (isTodayLoaded && !nowLineInserted && hours.length) {
+      html += '<div class="now-line"></div>';
+    }
+
+    if (!html) {
+      html = '<div class="empty">' +
+        (filterT ? 'Nenhum item desse tipo no dia.' : 'Sem itens no plano deste dia.') +
+      '</div>';
+    }
+
+    root.innerHTML = html;
+
+    // ── Summary com score total ──────────────────────────────────
+    const totalAll = timedCount + (passFilter('wd') ? wd.length : 0) + (passFilter('adhoc') ? adhocTasks.length : 0);
+    let doneAll = timedDone + (passFilter('adhoc') ? adhocTasks.length : 0);
+    if (passFilter('wd')) {
+      wd.forEach((it, i) => {
+        const realIx = view.items.indexOf(it);
+        const wdInfo = it.wd || { cur:0, target:1 };
+        if (isDone(it, realIx) || wdInfo.cur >= wdInfo.target) doneAll++;
+      });
+    }
+    const pct = totalAll ? Math.round(doneAll * 100 / totalAll) : 0;
+    const scorePill = scoreTotal > 0 ? ' <span class="score-pill">+' + scoreTotal + ' pts</span>' : '';
+    const filterChip = filterT
+      ? ' <span class="score-pill" style="background:rgba(245,158,11,.18);color:#f59e0b;border-color:rgba(245,158,11,.4);cursor:pointer" onclick="setFilter(null)">filtro ativo · limpar</span>'
+      : '';
+    summaryEl.innerHTML = '<span><b>' + doneAll + '/' + totalAll + '</b> feitos · ' + pct + '%</span>' +
+      scorePill + filterChip +
+      '<span style="margin-left:auto">' + totalAll + ' item' + (totalAll===1?'':'s') + '</span>';
+  }
+
+  // ─── Toggle handlers ────────────────────────────────────────────
+  window.toggleWdCollapse = function () {
+    if (!view) return;
+    collapse.wd = !collapse.wd;
+    saveCollapse(view.d);
+    render();
+  };
+  window.toggleSlotCollapse = function (h) {
+    if (!view) return;
+    const ix = collapse.slots.indexOf(h);
+    if (ix >= 0) collapse.slots.splice(ix, 1);
+    else collapse.slots.push(h);
+    saveCollapse(view.d);
+    render();
+  };
+
+  // ─── Ad-hoc handlers ────────────────────────────────────────────
+  window.openAdhocSheet = function () {
+    const date = view ? view.d : new Date().toISOString().slice(0,10);
+    loadAdhoc(date);
+    document.getElementById('adhocText').value = '';
+    document.getElementById('adhocScore').value = '50';
+    adhocSetScore(50);
+    document.getElementById('adhocSheet').classList.add('open');
+    setTimeout(() => document.getElementById('adhocText').focus(), 100);
+  };
+  window.closeAdhocSheet = function () {
+    document.getElementById('adhocSheet').classList.remove('open');
+  };
+  window.adhocSetScore = function (n) {
+    document.getElementById('adhocScore').value = String(n);
+    document.querySelectorAll('.adhoc-quick button').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.sc, 10) === n);
+    });
+  };
+  window.saveAdhoc = function () {
+    const text = (document.getElementById('adhocText').value || '').trim();
+    const score = Math.max(0, parseInt(document.getElementById('adhocScore').value, 10) || 0);
+    if (!text) { toast('⚠️ Escreva o que você fez'); return; }
+    const date = view ? view.d : new Date().toISOString().slice(0,10);
+    loadAdhoc(date);
+    const id = 'a_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+    adhocTasks.push({ id, text, score, doneAt: new Date().toISOString() });
+    saveAdhocList(date);
+    closeAdhocSheet();
+    toast('✓ Cadastrada (+' + score + 'pts)');
+    renderFilterChips();
+    render();
+  };
+  window.removeAdhoc = function (id) {
+    if (!view) return;
+    if (!confirm('Remover essa tarefa ad-hoc?')) return;
+    adhocTasks = adhocTasks.filter(a => a.id !== id);
+    saveAdhocList(view.d);
+    renderFilterChips();
+    render();
+  };
+
+  // ─── Handlers globais (window.* pra onclicks inline) ──────────
+  window.toggle = function (ix) {
+    if (!view) return;
+    const it = view.items[ix];
+    if (!it) return;
+    setDone(it, ix, !isDone(it, ix));
+    render();
+  };
+
+  window.openExportSheet = function () {
+    if (!view) { toast('Carregue o plano primeiro'); return; }
+    const lines = ['# Plano do dia · ' + view.d, ''];
+    let checkedCt = 0;
+    view.items.forEach((it, ix) => {
+      const wasDoneInPayload = !!it.x;
+      const isDoneNow = isDone(it, ix);
+      if (isDoneNow && !wasDoneInPayload) {
+        const time = it.time ? ' (' + it.time + ')' : '';
+        const sc = it.sc ? ' +' + it.sc + 'pts' : '';
+        lines.push('✓ ' + it.n + time + sc);
+        checkedCt++;
+      }
+    });
+    // Ad-hoc cadastradas no celular — sempre vão pro export
+    if (adhocTasks.length) {
+      lines.push('', '## Tarefas feitas no celular (ad-hoc):');
+      adhocTasks.forEach(at => {
+        const t = at.doneAt ? ' (' + String(at.doneAt).slice(11,16) + ')' : '';
+        const sc = at.score ? ' +' + at.score + 'pts' : '';
+        lines.push('➕ ' + at.text + t + sc);
+      });
+    }
+    const totalNew = checkedCt + adhocTasks.length;
+    if (totalNew === 0) lines.push('(Nenhum check novo desde a sincronia.)');
+    else {
+      const header = `**${totalNew} item${totalNew===1?'':'s'} novo${totalNew===1?'':'s'} desde a sincronia (${checkedCt} check${checkedCt===1?'':'s'}, ${adhocTasks.length} ad-hoc):**`;
+      lines.splice(1, 0, header, '');
+    }
+    document.getElementById('exportText').value = lines.join('\n');
+    document.getElementById('exportSheet').classList.add('open');
+  };
+  window.closeExportSheet = function () {
+    document.getElementById('exportSheet').classList.remove('open');
+  };
+  window.copyExport = async function () {
+    const ta = document.getElementById('exportText');
+    try { await navigator.clipboard.writeText(ta.value); toast('📋 Copiado'); }
+    catch {
+      ta.select();
+      try { document.execCommand('copy'); toast('📋 Copiado'); }
+      catch { toast('Selecione e copie manualmente'); }
+    }
+  };
+
+  // ─── Scanner (BarcodeDetector + fallback paste) ───────────────
+  let _scanStream = null;
+  let _scanRaf = null;
+  let _scanDetector = null;
+
+  function _diagnoseCameraIssue(err) {
+    const proto = location.protocol;
+    const isSecure = (proto === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || proto === 'file:');
+    if (proto === 'file:' && !navigator.mediaDevices) {
+      return '⚠️ Câmera ao vivo não funciona quando o arquivo é aberto via <code>file://</code>.<br>' +
+             '<b>Use o botão "📁 Tirar foto do QR"</b> abaixo — funciona em qualquer contexto.';
+    }
+    if (!isSecure || !navigator.mediaDevices) {
+      return '⚠️ Câmera ao vivo precisa de HTTPS.<br>' +
+             '<b>Use o botão "📁 Tirar foto do QR"</b> abaixo.';
+    }
+    const msg = String(err?.name || err?.message || err || '');
+    if (/NotAllowed|Permission/i.test(msg)) {
+      return '⚠️ Permissão de câmera negada nas configurações do navegador.<br>' +
+             'Use "📁 Tirar foto do QR" ou cole a URL.';
+    }
+    if (/NotFound|DevicesNotFound/i.test(msg)) {
+      return '⚠️ Nenhuma câmera disponível neste dispositivo.';
+    }
+    return '⚠️ Câmera indisponível: ' + esc(msg) + '<br>Use "📁 Tirar foto do QR" abaixo.';
+  }
+
+  window.openScanner = async function () {
+    const overlay = document.getElementById('scanOverlay');
+    const video = document.getElementById('scanVideo');
+    const status = document.getElementById('scanStatus');
+    const pasteInp = document.getElementById('scanPaste');
+    overlay.classList.add('open');
+    pasteInp.value = '';
+
+    if (!('BarcodeDetector' in window)) {
+      status.innerHTML = '⚠️ Este navegador não suporta scanner nativo (BarcodeDetector).<br>Use "📁 Tirar foto do QR" — não vai funcionar a decodificação aqui.<br>Cole a URL manualmente.';
+      return;
+    }
+    try {
+      const formats = await BarcodeDetector.getSupportedFormats();
+      if (!formats.includes('qr_code')) {
+        status.innerHTML = '⚠️ Scanner não suporta QR Code neste navegador.<br>Cole a URL manualmente.';
+        return;
+      }
+      _scanDetector = new BarcodeDetector({ formats: ['qr_code'] });
+    } catch (e) {
+      status.innerHTML = '⚠️ Falha ao inicializar scanner: ' + esc(String(e.message || e));
+      return;
+    }
+    // Câmera ao vivo precisa de HTTPS/localhost — file:// e http:// não tem acesso a mediaDevices.
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      status.innerHTML = _diagnoseCameraIssue(null);
+      return;
+    }
+    try {
+      _scanStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false,
+      });
+      video.srcObject = _scanStream;
+      await video.play().catch(()=>{});
+      status.textContent = 'Aponte a câmera pro QR Code…';
+      _scanLoop();
+    } catch (e) {
+      status.innerHTML = _diagnoseCameraIssue(e);
+    }
+  };
+
+  // Decodifica QR a partir de uma foto tirada via file input (funciona em file://)
+  window.onPhotoSelected = async function (input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const status = document.getElementById('scanStatus');
+    status.textContent = '🔎 Decodificando imagem…';
+    try {
+      if (!_scanDetector) {
+        if (!('BarcodeDetector' in window)) throw new Error('BarcodeDetector não suportado neste navegador');
+        const formats = await BarcodeDetector.getSupportedFormats();
+        if (!formats.includes('qr_code')) throw new Error('QR Code não suportado pelo scanner nativo');
+        _scanDetector = new BarcodeDetector({ formats: ['qr_code'] });
+      }
+      const bmp = await createImageBitmap(file);
+      const codes = await _scanDetector.detect(bmp);
+      try { bmp.close(); } catch {}
+      if (!codes || !codes.length) {
+        status.innerHTML = '⚠️ Nenhum QR encontrado na imagem. Tente tirar outra foto, mais perto e com boa iluminação.';
+        input.value = '';
+        return;
+      }
+      for (const c of codes) {
+        const payload = extractPayload(c.rawValue || '');
+        if (payload) {
+          status.textContent = '✓ QR decodificado — carregando…';
+          await closeScanner();
+          const ok = await loadPayload(payload);
+          if (ok) toast('✓ Dados carregados');
+          return;
+        }
+      }
+      status.innerHTML = '⚠️ QR encontrado mas não contém dados do plano. (Conteúdo: ' + esc((codes[0].rawValue || '').slice(0, 60)) + '…)';
+    } catch (e) {
+      status.innerHTML = '⚠️ Falha ao decodificar: ' + esc(String(e.message || e));
+    }
+    input.value = '';
+  };
+
+  async function _scanLoop() {
+    const video = document.getElementById('scanVideo');
+    const status = document.getElementById('scanStatus');
+    if (!_scanDetector || !_scanStream || video.readyState < 2) {
+      _scanRaf = requestAnimationFrame(_scanLoop);
+      return;
+    }
+    try {
+      const codes = await _scanDetector.detect(video);
+      if (codes && codes.length) {
+        for (const c of codes) {
+          const payload = extractPayload(c.rawValue || '');
+          if (payload) {
+            status.textContent = '✓ QR detectado — carregando…';
+            await closeScanner();
+            const ok = await loadPayload(payload);
+            if (ok) toast('✓ Dados carregados');
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      // Ignora erros transitórios
+    }
+    _scanRaf = requestAnimationFrame(_scanLoop);
+  }
+
+  window.closeScanner = async function () {
+    document.getElementById('scanOverlay').classList.remove('open');
+    if (_scanRaf) { cancelAnimationFrame(_scanRaf); _scanRaf = null; }
+    if (_scanStream) {
+      for (const tr of _scanStream.getTracks()) try { tr.stop(); } catch {}
+      _scanStream = null;
+    }
+    const video = document.getElementById('scanVideo');
+    if (video) { try { video.srcObject = null; } catch {} }
+  };
+
+  window.acceptPastedUrl = async function () {
+    const inp = document.getElementById('scanPaste');
+    const payload = extractPayload(inp.value);
+    if (!payload) { toast('URL não reconhecida'); return; }
+    await closeScanner();
+    const ok = await loadPayload(payload);
+    if (ok) toast('✓ Dados carregados');
+  };
+
+  // ═════════════════════════════════════════════════════════════════
+  // ─── TREINO DO DIA — card + execução ─────────────────────────────
+  // ═════════════════════════════════════════════════════════════════
+
+  const wkCardEl = document.getElementById('wkCard');
+  const wkExecEl = document.getElementById('wkExec');
+  const wkExecTitle = document.getElementById('wkExecTitle');
+  const wkExecBody = document.getElementById('wkExecBody');
+  const wkExecFoot = document.getElementById('wkExecFoot');
+  const wkExecTotals = document.getElementById('wkExecTotals');
+  const wkRestBar = document.getElementById('wkRestBar');
+  const wkRestNum = document.getElementById('wkRestNum');
+
+  function wkResumeKey(date, tplId) { return `mobileWkExec:${date}:${tplId}`; }
+  function wkDoneKey(date, tplId)   { return `mobileWkDone:${date}:${tplId}`; }
+  let wkState = null;      // { date, optId, tplId, name, color, time, durMins, score, startedAt|null, finishedAt|null, exs:[{n,mg,rs,sets:[{w,r,done,doneAt?}]}] }
+  let wkRest  = null;      // { until: ts ms, base: secs, raf?: id, finished: bool }
+  let wkTickInterval = null;
+  let wkWakeLock = null;
+  let wkAudioCtx = null;
+
+  function renderWkCard() {
+    wkCardEl.innerHTML = '';
+    if (!view || !view.wk) return;
+    const date = view.d;
+    const wk = view.wk;
+    const finished = !!localStorage.getItem(wkDoneKey(date, wk.tplId));
+    const resumed = !!localStorage.getItem(wkResumeKey(date, wk.tplId));
+    const cls = finished ? 'wk-card done' : 'wk-card';
+    const status = finished ? '✅ Finalizado' : (resumed ? '⏸ Em andamento' : '🆕 Pronto pra começar');
+    const meta = [
+      wk.time ? esc(wk.time) : '',
+      wk.durMins ? `${wk.durMins}min` : '',
+      wk.exs ? `${wk.exs.length} exercício${wk.exs.length===1?'':'s'}` : '',
+      status,
+    ].filter(Boolean).join(' · ');
+    wkCardEl.innerHTML = `
+      <div class="${cls}" onclick="openWkExec()">
+        <div class="wk-card-icon">🏋</div>
+        <div class="wk-card-body">
+          <div class="wk-card-title">${esc(wk.name)}</div>
+          <div class="wk-card-meta">${meta}</div>
+        </div>
+        <button class="wk-card-btn" onclick="event.stopPropagation();openWkExec()">${finished ? 'Ver' : (resumed ? 'Retomar' : 'Iniciar')}</button>
+      </div>
+    `;
+  }
+
+  function ensureWkState() {
+    if (wkState) return wkState;
+    if (!view || !view.wk) return null;
+    const date = view.d;
+    const wk = view.wk;
+    // Tenta resumir do localStorage
+    try {
+      const raw = localStorage.getItem(wkResumeKey(date, wk.tplId));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.tplId === wk.tplId && parsed.date === date) {
+          wkState = parsed;
+          return wkState;
+        }
+      }
+    } catch {}
+    // Inicializa do zero — pré-preenche com last (autofill) se houver
+    wkState = {
+      date,
+      optId: wk.optId || '',
+      tplId: wk.tplId,
+      name: wk.name,
+      color: wk.color,
+      time: wk.time || '',
+      durMins: wk.durMins || 0,
+      score: wk.score || 0,
+      startedAt: null,
+      finishedAt: null,
+      exs: wk.exs.map(ex => {
+        const setCount = Math.max(1, ex.s || 3);
+        const last = Array.isArray(ex.last) ? ex.last : [];
+        const sets = [];
+        for (let i = 0; i < setCount; i++) {
+          const ref = last[i];
+          sets.push({
+            w: ref ? ref.w : (Number(ex.w)||0),
+            r: ref ? ref.r : (Number(ex.r)||0),
+            done: false,
+          });
+        }
+        return {
+          n: ex.n, mg: ex.mg || '',
+          rs: parseInt(ex.rs, 10) > 0 ? parseInt(ex.rs, 10) : 90,
+          sets,
+        };
+      }),
+    };
+    saveWkState();
+    return wkState;
+  }
+
+  function saveWkState() {
+    if (!wkState) return;
+    try { localStorage.setItem(wkResumeKey(wkState.date, wkState.tplId), JSON.stringify(wkState)); }
+    catch {}
+  }
+
+  function fmtMSS(secs) {
+    if (!Number.isFinite(secs) || secs < 0) secs = 0;
+    const m = Math.floor(secs / 60), s = secs % 60;
+    return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }
+  function fmtHMS(secs) {
+    if (!Number.isFinite(secs) || secs < 0) secs = 0;
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    return (h ? String(h).padStart(2,'0') + ':' : '') + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }
+
+  // Atualiza só os totais (chamado a cada 1s pelo tick) — NÃO toca no body
+  // pra não destruir inputs em foco e fechar o teclado do celular.
+  function renderWkExecTick() {
+    if (!wkState) return;
+    let doneSets = 0, totalSets = 0;
+    for (const ex of wkState.exs) for (const s of ex.sets) { totalSets++; if (s.done) doneSets++; }
+    let durSecs = 0;
+    if (wkState.startedAt) {
+      const end = wkState.finishedAt ? new Date(wkState.finishedAt).getTime() : Date.now();
+      durSecs = Math.max(0, Math.floor((end - new Date(wkState.startedAt).getTime()) / 1000));
+    }
+    wkExecTotals.innerHTML = `
+      <span>⏱ <b>${fmtHMS(durSecs)}</b></span>
+      <span>✓ <b>${doneSets}/${totalSets}</b> séries</span>
+      <span style="margin-left:auto">${wkState.startedAt ? (wkState.finishedAt ? '✅ Finalizado' : '▶ Em curso') : '⏸ Não iniciado'}</span>
+    `;
+  }
+
+  function renderWkExec() {
+    if (!wkState) return;
+    // Se o usuário está digitando num input do corpo, NÃO re-renderiza o body —
+    // senão o input é destruído e o teclado some. Só atualiza totais/footer.
+    const active = document.activeElement;
+    const isTypingInBody = active && wkExecBody.contains(active) &&
+      (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
+    wkExecTitle.textContent = '🏋 ' + wkState.name;
+    renderWkExecTick();
+    if (isTypingInBody) {
+      // Atualiza só classes "done" das rows que mudaram (pra refletir toggle
+      // sem reconstruir os inputs). Footer/totais já atualizados acima.
+      _syncRowDoneClasses();
+      _syncFooter();
+      return;
+    }
+    // Corpo
+    let html = '';
+    wkState.exs.forEach((ex, exIx) => {
+      let setsHtml = `<div class="wk-set-head"><span>#</span><span>kg</span><span>reps</span><span>✓</span><span></span></div>`;
+      ex.sets.forEach((s, ix) => {
+        setsHtml += `<div class="wk-set-row ${s.done?'done':''}">
+          <span class="wk-set-num">${ix+1}</span>
+          <input class="wk-set-input" type="number" inputmode="decimal" step="0.5" value="${s.w}" onchange="wkSetVal(${exIx},${ix},'w',this.value)">
+          <input class="wk-set-input" type="number" inputmode="numeric" step="1" value="${s.r}" onchange="wkSetVal(${exIx},${ix},'r',this.value)">
+          <button class="wk-set-check" onclick="wkSetToggle(${exIx},${ix})">✓</button>
+          <button class="wk-set-rm" onclick="wkSetRemove(${exIx},${ix})" title="Remover série">✕</button>
+        </div>`;
+      });
+      html += `<div class="wk-ex">
+        <div class="wk-ex-head">
+          <div>
+            <div class="wk-ex-name">${esc(ex.n)}</div>
+            ${ex.mg ? `<div class="wk-ex-mg">${esc(ex.mg)}</div>` : ''}
+          </div>
+          <div class="wk-ex-rest">Descanso: <input class="wk-rest-input" type="number" inputmode="numeric" step="5" min="0" value="${ex.rs}" onchange="wkExRest(${exIx},this.value)">s</div>
+        </div>
+        ${setsHtml}
+        <div class="wk-ex-actions">
+          <button onclick="wkSetAdd(${exIx})">+ série</button>
+          <button onclick="wkExResetAutofill(${exIx})" title="Volta ao autofill da última sessão">↺ autofill</button>
+        </div>
+      </div>`;
+    });
+    wkExecBody.innerHTML = html;
+    _syncFooter();
+  }
+
+  // Atualiza só as classes 'done' das rows sem reconstruir os inputs.
+  // Usado quando renderWkExec é chamado com input em foco (race do tick).
+  function _syncRowDoneClasses() {
+    if (!wkState) return;
+    const rows = wkExecBody.querySelectorAll('.wk-set-row');
+    let idx = 0;
+    for (const ex of wkState.exs) {
+      for (const s of ex.sets) {
+        const row = rows[idx++];
+        if (row) row.classList.toggle('done', !!s.done);
+      }
+    }
+  }
+
+  // Render do footer (separado pra reusar no renderWkExec e no caso de skip do body)
+  function _syncFooter() {
+    if (!wkState) return;
+    const startedAndNotDone = wkState.startedAt && !wkState.finishedAt;
+    if (wkState.finishedAt) {
+      wkExecFoot.innerHTML = `
+        <button class="wk-btn-pause" onclick="closeWkExec()">Fechar</button>
+        <button class="wk-btn-finish" onclick="wkShowDone()">📋 Repassar pro desktop</button>
+      `;
+    } else if (startedAndNotDone) {
+      wkExecFoot.innerHTML = `
+        <button class="wk-btn-pause" onclick="closeWkExec()">Pausar</button>
+        <button class="wk-btn-finish" onclick="wkFinish()">Finalizar treino</button>
+      `;
+    } else {
+      wkExecFoot.innerHTML = `
+        <button class="wk-btn-pause" onclick="closeWkExec()">Fechar</button>
+        <button class="wk-btn-start" onclick="wkStart()">▶ Iniciar treino</button>
+      `;
+    }
+  }
+
+  // ─── Wake Lock ──────────────────────────────────────────────────
+  async function wkAcquireWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    try { wkWakeLock = await navigator.wakeLock.request('screen'); }
+    catch (e) { /* ignora */ }
+  }
+  async function wkReleaseWakeLock() {
+    try { if (wkWakeLock) await wkWakeLock.release(); } catch {}
+    wkWakeLock = null;
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && wkState && wkState.startedAt && !wkState.finishedAt && wkExecEl.classList.contains('open')) {
+      wkAcquireWakeLock();
+    }
+  });
+
+  // ─── Som (bip) + vibração ───────────────────────────────────────
+  function wkBeep() {
+    try {
+      if (!wkAudioCtx) wkAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = wkAudioCtx;
+      if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
+      const t0 = ctx.currentTime;
+      [0, 0.18, 0.36].forEach(delay => {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 880;
+        g.gain.value = 0;
+        osc.connect(g); g.connect(ctx.destination);
+        const t = t0 + delay;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.25, t + 0.02);
+        g.gain.linearRampToValueAtTime(0, t + 0.14);
+        osc.start(t); osc.stop(t + 0.16);
+      });
+    } catch {}
+    try { if ('vibrate' in navigator) navigator.vibrate([220, 90, 220]); } catch {}
+  }
+
+  // ─── Rest timer ─────────────────────────────────────────────────
+  function wkRestStart(secs) {
+    if (!Number.isFinite(secs) || secs <= 0) return;
+    wkRest = { until: Date.now() + secs*1000, base: secs, finished: false };
+    wkRestBar.classList.add('show');
+    wkRestBar.classList.remove('done');
+    wkRestTick();
+  }
+  function wkRestTick() {
+    if (!wkRest) { wkRestBar.classList.remove('show', 'done'); return; }
+    const remaining = Math.max(0, Math.round((wkRest.until - Date.now()) / 1000));
+    wkRestNum.textContent = '⏳ ' + fmtMSS(remaining);
+    if (remaining === 0 && !wkRest.finished) {
+      wkRest.finished = true;
+      wkBeep();
+      wkRestBar.classList.add('done');
+      wkRestNum.textContent = '✅ Descanso completo';
+      // Some sozinho depois de 6s
+      setTimeout(() => { if (wkRest && wkRest.finished) wkRestStop(); }, 6000);
+      return;
+    }
+    if (remaining > 0) setTimeout(wkRestTick, 250);
+  }
+  window.wkRestAdjust = function (delta) {
+    if (!wkRest) return;
+    wkRest.until += delta * 1000;
+    if (wkRest.until < Date.now()) wkRest.until = Date.now() + 1000;
+    if (wkRest.finished) {
+      wkRest.finished = false;
+      wkRestBar.classList.remove('done');
+      wkRestTick();
+    }
+  };
+  window.wkRestSkip = function () { wkRestStop(); };
+  function wkRestStop() {
+    wkRest = null;
+    wkRestBar.classList.remove('show', 'done');
+    wkRestNum.textContent = '00:00';
+  }
+
+  // ─── Set handlers ───────────────────────────────────────────────
+  window.wkSetVal = function (exIx, ix, field, val) {
+    if (!wkState) return;
+    const ex = wkState.exs[exIx]; if (!ex) return;
+    const s = ex.sets[ix]; if (!s) return;
+    const n = parseFloat(val); s[field] = Number.isFinite(n) ? n : 0;
+    saveWkState();
+  };
+  window.wkSetToggle = function (exIx, ix) {
+    if (!wkState) return;
+    const ex = wkState.exs[exIx]; if (!ex) return;
+    const s = ex.sets[ix]; if (!s) return;
+    // Auto-iniciar treino na primeira série marcada
+    if (!wkState.startedAt) wkStart(true);
+    s.done = !s.done;
+    if (s.done) {
+      s.doneAt = new Date().toISOString();
+      wkRestStart(ex.rs || 90);
+    } else {
+      delete s.doneAt;
+    }
+    saveWkState();
+    renderWkExec();
+  };
+  window.wkSetAdd = function (exIx) {
+    if (!wkState) return;
+    const ex = wkState.exs[exIx]; if (!ex) return;
+    const last = ex.sets[ex.sets.length - 1] || { w: 0, r: 0 };
+    ex.sets.push({ w: last.w, r: last.r, done: false });
+    saveWkState();
+    renderWkExec();
+  };
+  window.wkSetRemove = function (exIx, ix) {
+    if (!wkState) return;
+    const ex = wkState.exs[exIx]; if (!ex) return;
+    if (ex.sets.length <= 1) { toast('Mantenha pelo menos 1 série'); return; }
+    ex.sets.splice(ix, 1);
+    saveWkState();
+    renderWkExec();
+  };
+  window.wkExRest = function (exIx, val) {
+    if (!wkState) return;
+    const ex = wkState.exs[exIx]; if (!ex) return;
+    const n = parseInt(val, 10);
+    ex.rs = Number.isFinite(n) && n >= 0 ? n : 90;
+    saveWkState();
+  };
+  window.wkExResetAutofill = function (exIx) {
+    if (!wkState || !view || !view.wk) return;
+    const srcEx = view.wk.exs[exIx]; if (!srcEx) return;
+    const ex = wkState.exs[exIx]; if (!ex) return;
+    const last = Array.isArray(srcEx.last) ? srcEx.last : [];
+    ex.sets = ex.sets.map((s, i) => {
+      if (s.done) return s; // não mexe nas feitas
+      const ref = last[i];
+      return ref ? { ...s, w: ref.w, r: ref.r } : { ...s, w: Number(srcEx.w)||0, r: Number(srcEx.r)||0 };
+    });
+    saveWkState();
+    renderWkExec();
+    toast('↺ Pesos/reps voltaram pra última sessão');
+  };
+
+  // ─── Start / Finish ─────────────────────────────────────────────
+  function wkStart(silent) {
+    if (!wkState) return;
+    if (!wkState.startedAt) {
+      wkState.startedAt = new Date().toISOString();
+      saveWkState();
+      if (!silent) toast('▶ Treino iniciado');
+    }
+    if (wkTickInterval) clearInterval(wkTickInterval);
+    wkTickInterval = setInterval(() => {
+      if (wkState && wkState.startedAt && !wkState.finishedAt && wkExecEl.classList.contains('open')) {
+        renderWkExecTick();
+      }
+    }, 1000);
+    wkAcquireWakeLock();
+    renderWkExec();
+  }
+  window.wkStart = wkStart;
+
+  window.wkFinish = function () {
+    if (!wkState) return;
+    let doneCt = 0, totalCt = 0;
+    for (const ex of wkState.exs) for (const s of ex.sets) { totalCt++; if (s.done) doneCt++; }
+    if (doneCt === 0) {
+      if (!confirm('Nenhuma série marcada como feita. Finalizar mesmo assim?')) return;
+    }
+    wkState.finishedAt = new Date().toISOString();
+    saveWkState();
+    if (wkTickInterval) { clearInterval(wkTickInterval); wkTickInterval = null; }
+    wkReleaseWakeLock();
+    wkRestStop();
+    // Marca como finalizado pro card mudar status
+    try { localStorage.setItem(wkDoneKey(wkState.date, wkState.tplId), '1'); } catch {}
+    renderWkExec();
+    wkShowDone();
+  };
+
+  // ─── Tela de export pós-finalização ─────────────────────────────
+  window.wkShowDone = function () {
+    if (!wkState) return;
+    const start = new Date(wkState.startedAt).getTime();
+    const end = new Date(wkState.finishedAt || new Date().toISOString()).getTime();
+    const durSecs = Math.max(0, Math.floor((end - start) / 1000));
+    let totalVol = 0, doneSets = 0, totalSets = 0;
+    for (const ex of wkState.exs) for (const s of ex.sets) {
+      totalSets++;
+      if (s.done) { doneSets++; totalVol += (Number(s.w)||0) * (Number(s.r)||0); }
+    }
+    const payload = {
+      kind: 'wkSession',
+      date: wkState.date,
+      optId: wkState.optId || null,
+      tplId: wkState.tplId,
+      tplName: wkState.name,
+      startedAt: wkState.startedAt,
+      finishedAt: wkState.finishedAt,
+      durationSecs: durSecs,
+      exercises: wkState.exs.map(ex => ({
+        name: ex.n,
+        muscleGroup: ex.mg,
+        sets: ex.sets.filter(s => s.done).map(s => ({
+          weight: Number(s.w)||0,
+          reps: Number(s.r)||0,
+          restSecs: ex.rs || 90,
+        })),
+      })).filter(ex => ex.sets.length > 0),
+    };
+    const json = JSON.stringify(payload);
+    wkExecBody.innerHTML = `
+      <div class="wk-done-card">
+        <div class="wk-done-stat"><span class="lbl">⏱ Duração</span><b>${fmtHMS(durSecs)}</b></div>
+        <div class="wk-done-stat"><span class="lbl">✓ Séries feitas</span><b>${doneSets}/${totalSets}</b></div>
+        <div class="wk-done-stat"><span class="lbl">📊 Volume total</span><b>${totalVol.toLocaleString('pt-BR')} kg</b></div>
+        <div class="wk-done-stat"><span class="lbl">📅 Data</span><b>${esc(wkState.date)}</b></div>
+      </div>
+      <div style="font-size:.82rem;color:var(--text2);margin-bottom:8px">
+        Cole o JSON abaixo no desktop em <b>Treino → 📥 Importar → Importar sessão do celular</b>.
+      </div>
+      <textarea id="wkDoneJson" readonly style="width:100%;min-height:200px;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;resize:vertical;box-sizing:border-box">${esc(json)}</textarea>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="wk-btn-finish" style="flex:1;padding:12px;border:0;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit" onclick="wkCopyDone()">📋 Copiar JSON</button>
+        <button class="wk-btn-pause" style="flex:0 0 auto;padding:12px 18px;border:1px solid var(--border);border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit" onclick="wkClearAndClose()">Limpar e fechar</button>
+      </div>
+    `;
+    wkExecFoot.innerHTML = '';
+  };
+  window.wkCopyDone = async function () {
+    const ta = document.getElementById('wkDoneJson');
+    if (!ta) return;
+    try { await navigator.clipboard.writeText(ta.value); toast('📋 JSON copiado'); }
+    catch {
+      ta.select();
+      try { document.execCommand('copy'); toast('📋 Copiado'); }
+      catch { toast('Selecione e copie manualmente'); }
+    }
+  };
+  window.wkClearAndClose = function () {
+    if (!confirm('Limpar a sessão do celular? Use só depois de colar o JSON no desktop.')) return;
+    if (wkState) {
+      try { localStorage.removeItem(wkResumeKey(wkState.date, wkState.tplId)); } catch {}
+    }
+    wkState = null;
+    closeWkExec();
+    renderWkCard();
+  };
+
+  // ─── Abrir / Fechar overlay ─────────────────────────────────────
+  window.openWkExec = function () {
+    if (!view || !view.wk) return;
+    ensureWkState();
+    wkExecEl.classList.add('open');
+    renderWkExec();
+    if (wkState && wkState.startedAt && !wkState.finishedAt) {
+      // Retoma o tick
+      if (!wkTickInterval) {
+        wkTickInterval = setInterval(() => {
+          if (wkState && wkState.startedAt && !wkState.finishedAt && wkExecEl.classList.contains('open')) {
+            renderWkExecTick();
+          }
+        }, 1000);
+      }
+      wkAcquireWakeLock();
+    }
+  };
+  window.closeWkExec = function () {
+    wkExecEl.classList.remove('open');
+    if (wkTickInterval) { clearInterval(wkTickInterval); wkTickInterval = null; }
+    wkReleaseWakeLock();
+    // Não para o rest timer — pode terminar com app em segundo plano
+    renderWkCard();
+  };
+
+  // Esc fecha overlay
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && wkExecEl.classList.contains('open')) closeWkExec();
+  });
+
+  // ═════════════════════════════════════════════════════════════════
+  // ─── Hook no render principal pra mostrar o card de treino ──────
+  // ═════════════════════════════════════════════════════════════════
+  const _origRender = render;
+  render = function () { _origRender(); renderWkCard(); };
+
+  // ═════════════════════════════════════════════════════════════════
+  // ─── PWA: registrar SW + banner de instalação ───────────────────
+  // ═════════════════════════════════════════════════════════════════
+  const INSTALL_DISMISS_KEY = 'pwaInstallDismissed';
+  let _deferredPrompt = null;
+
+  function _isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches ||
+           window.navigator.standalone === true;
+  }
+  function _isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  }
+  function _isIOSSafari() {
+    if (!_isIOS()) return false;
+    const ua = navigator.userAgent;
+    // Não é Chrome/Firefox/Edge dentro do iOS (esses tem CriOS/FxiOS/EdgiOS no UA)
+    return !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser/.test(ua);
+  }
+
+  function _showInstallBanner(reason) {
+    const banner = document.getElementById('installBanner');
+    const sub = document.getElementById('installBannerSub');
+    if (!banner) return;
+    // Não mostra se já dispensado nessa sessão ou se já instalado
+    if (sessionStorage.getItem(INSTALL_DISMISS_KEY) === '1') return;
+    if (_isStandalone()) return;
+    if (sub) {
+      sub.textContent = reason === 'ios'
+        ? 'Toque em Instalar pra ver como (iPhone/iPad).'
+        : 'Funciona offline, abre como app.';
+    }
+    banner.classList.add('show');
+  }
+
+  window.triggerInstall = async function () {
+    if (_deferredPrompt) {
+      _deferredPrompt.prompt();
+      try {
+        const choice = await _deferredPrompt.userChoice;
+        if (choice.outcome === 'accepted') toast('✓ App instalado');
+      } catch {}
+      _deferredPrompt = null;
+      document.getElementById('installBanner')?.classList.remove('show');
+      return;
+    }
+    // Sem prompt nativo (iOS Safari, ou Android sem evento ainda) → mostra instruções
+    if (_isIOS()) openIosInstallSheet();
+    else toast('Procure "Instalar app" no menu do navegador ⋮');
+  };
+
+  window.dismissInstall = function () {
+    sessionStorage.setItem(INSTALL_DISMISS_KEY, '1');
+    document.getElementById('installBanner')?.classList.remove('show');
+  };
+
+  window.openIosInstallSheet = function () {
+    document.getElementById('iosInstallSheet')?.classList.add('open');
+  };
+  window.closeIosInstallSheet = function () {
+    document.getElementById('iosInstallSheet')?.classList.remove('open');
+  };
+
+  // Captura o prompt de instalação do Chrome/Edge antes do browser mostrar
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    _deferredPrompt = e;
+    _showInstallBanner('android');
+  });
+  window.addEventListener('appinstalled', () => {
+    _deferredPrompt = null;
+    document.getElementById('installBanner')?.classList.remove('show');
+    toast('✓ Hábitos instalado no celular');
+  });
+
+  // iOS Safari: nunca dispara beforeinstallprompt — mostra banner manualmente
+  // após um pequeno delay (pra não atrapalhar load inicial).
+  if (_isIOSSafari() && !_isStandalone()) {
+    setTimeout(() => _showInstallBanner('ios'), 1500);
+  }
+
+  // Registra o service worker (silencioso se falhar — file:// ou http:// não permitem)
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => { /* ignora */ });
+    });
+  }
+
+  // ─── Boot: hash > localStorage > vazio ────────────────────────
+  (async function init() {
+    const hashMatch = (location.hash || '').match(/^#d=(.+)$/);
+    let b64 = null;
+    if (hashMatch) b64 = hashMatch[1];
+    else { try { b64 = localStorage.getItem(LAST_PAYLOAD_KEY); } catch {} }
+    if (b64) await loadPayload(b64);
+    else showEmptyState();
+    // Re-render a cada minuto pra mover a "now-line"
+    setInterval(() => { if (view) render(); }, 60000);
+  })();
+})();
+</script>
+</body>
+</html>
