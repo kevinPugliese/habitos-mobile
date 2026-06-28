@@ -8,7 +8,11 @@
 <!-- PWA -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1766,18 +1770,34 @@
 
   window.triggerInstall = async function () {
     if (_deferredPrompt) {
-      _deferredPrompt.prompt();
+      try {
+        _deferredPrompt.prompt();
+      } catch (e) {
+        toast('⚠️ Browser bloqueou o prompt: ' + (e.message || e));
+        return;
+      }
       try {
         const choice = await _deferredPrompt.userChoice;
-        if (choice.outcome === 'accepted') toast('✓ App instalado');
-      } catch {}
-      _deferredPrompt = null;
-      document.getElementById('installBanner')?.classList.remove('show');
+        if (choice.outcome === 'accepted') {
+          toast('✓ Instalando…');
+          _deferredPrompt = null;
+          document.getElementById('installBanner')?.classList.remove('show');
+          // Fallback: se appinstalled não disparar em 5s, avisa pra procurar na gaveta
+          setTimeout(() => {
+            if (!_isStandalone()) toast('🔍 Verifica na gaveta de apps ou pesquisa "Hábitos"', 4500);
+          }, 5000);
+        } else {
+          toast('Instalação dispensada — toque "Instalar" pra tentar de novo');
+          // Mantém banner aberto e _deferredPrompt vivo pra próxima tentativa
+        }
+      } catch (e) {
+        toast('⚠️ Erro: ' + (e.message || e));
+      }
       return;
     }
     // Sem prompt nativo (iOS Safari, ou Android sem evento ainda) → mostra instruções
     if (_isIOS()) openIosInstallSheet();
-    else toast('Procure "Instalar app" no menu do navegador ⋮');
+    else toast('Procure "Adicionar à Tela de início" no menu do navegador ⋮');
   };
 
   window.dismissInstall = function () {
