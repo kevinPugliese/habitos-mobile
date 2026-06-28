@@ -1,12 +1,15 @@
 // Service Worker — Hábitos mobile PWA
 // Network-first com fallback pra cache, escopo limitado aos assets do mobile.
 // Bumpa o CACHE_VERSION quando mudar a estrutura dos assets cacheados.
-const CACHE_VERSION = 'habitos-mobile-v1';
+const CACHE_VERSION = 'habitos-mobile-v2';
 const PRECACHE = [
   './mobile.html',
   './manifest.webmanifest',
   './icon.svg',
   './icon-maskable.svg',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-512.png',
 ];
 
 self.addEventListener('install', (event) => {
