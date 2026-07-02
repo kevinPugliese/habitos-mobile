@@ -351,6 +351,19 @@
     font-weight: 700; cursor: pointer; font-family: inherit;
   }
   .wk-exec-body { flex: 1; overflow-y: auto; padding: 12px 12px 24px; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+  .wk-mg-section { margin-bottom: 14px; }
+  .wk-mg-section-head {
+    display: flex; align-items: center; gap: 8px;
+    font-size: .72rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--text2);
+    padding: 0 4px 6px; margin-top: 4px;
+    border-bottom: 1px solid var(--border); margin-bottom: 8px;
+  }
+  .wk-mg-section-head-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wk-mg-section-head-count {
+    background: var(--surface2); color: var(--text3);
+    border-radius: 99px; padding: 2px 8px; font-size: .68rem; font-weight: 700;
+  }
   .wk-ex {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 10px; padding: 12px; margin-bottom: 10px;
@@ -1380,33 +1393,54 @@
       _syncFooter();
       return;
     }
-    // Corpo
-    let html = '';
+    // Agrupa exercícios por grupo muscular (`mg`), preservando ordem de primeira
+    // ocorrência. Exercícios sem `mg` caem em "Outros". `exIx` original é mantido
+    // nos callbacks pra não quebrar a indexação em wkState.exs.
+    const groups = [];
+    const groupIx = Object.create(null);
     wkState.exs.forEach((ex, exIx) => {
-      let setsHtml = `<div class="wk-set-head"><span>#</span><span>kg</span><span>reps</span><span>✓</span><span></span></div>`;
-      ex.sets.forEach((s, ix) => {
-        setsHtml += `<div class="wk-set-row ${s.done?'done':''}">
-          <span class="wk-set-num">${ix+1}</span>
-          <input class="wk-set-input" type="number" inputmode="decimal" step="0.5" value="${s.w}" onchange="wkSetVal(${exIx},${ix},'w',this.value)">
-          <input class="wk-set-input" type="number" inputmode="numeric" step="1" value="${s.r}" onchange="wkSetVal(${exIx},${ix},'r',this.value)">
-          <button class="wk-set-check" onclick="wkSetToggle(${exIx},${ix})">✓</button>
-          <button class="wk-set-rm" onclick="wkSetRemove(${exIx},${ix})" title="Remover série">✕</button>
+      const label = (ex.mg || '').trim() || 'Outros';
+      const key = label.toLowerCase();
+      if (groupIx[key] === undefined) {
+        groupIx[key] = groups.length;
+        groups.push({ label, items: [] });
+      }
+      groups[groupIx[key]].items.push({ ex, exIx });
+    });
+
+    let html = '';
+    groups.forEach(g => {
+      html += `<div class="wk-mg-section">
+        <div class="wk-mg-section-head">
+          <span class="wk-mg-section-head-name">${esc(g.label)}</span>
+          <span class="wk-mg-section-head-count">${g.items.length} exerc${g.items.length===1?'ício':'ícios'}</span>
+        </div>`;
+      g.items.forEach(({ ex, exIx }) => {
+        let setsHtml = `<div class="wk-set-head"><span>#</span><span>kg</span><span>reps</span><span>✓</span><span></span></div>`;
+        ex.sets.forEach((s, ix) => {
+          setsHtml += `<div class="wk-set-row ${s.done?'done':''}" data-ex="${exIx}" data-set="${ix}">
+            <span class="wk-set-num">${ix+1}</span>
+            <input class="wk-set-input" type="number" inputmode="decimal" step="0.5" value="${s.w}" onchange="wkSetVal(${exIx},${ix},'w',this.value)">
+            <input class="wk-set-input" type="number" inputmode="numeric" step="1" value="${s.r}" onchange="wkSetVal(${exIx},${ix},'r',this.value)">
+            <button class="wk-set-check" onclick="wkSetToggle(${exIx},${ix})">✓</button>
+            <button class="wk-set-rm" onclick="wkSetRemove(${exIx},${ix})" title="Remover série">✕</button>
+          </div>`;
+        });
+        html += `<div class="wk-ex">
+          <div class="wk-ex-head">
+            <div style="flex:1;min-width:0">
+              <div class="wk-ex-name">${esc(ex.n)}</div>
+            </div>
+            <div class="wk-ex-rest">Descanso: <input class="wk-rest-input" type="number" inputmode="numeric" step="5" min="0" value="${ex.rs}" onchange="wkExRest(${exIx},this.value)">s</div>
+          </div>
+          ${setsHtml}
+          <div class="wk-ex-actions">
+            <button onclick="wkSetAdd(${exIx})">+ série</button>
+            <button onclick="wkExResetAutofill(${exIx})" title="Volta ao autofill da última sessão">↺ autofill</button>
+          </div>
         </div>`;
       });
-      html += `<div class="wk-ex">
-        <div class="wk-ex-head">
-          <div>
-            <div class="wk-ex-name">${esc(ex.n)}</div>
-            ${ex.mg ? `<div class="wk-ex-mg">${esc(ex.mg)}</div>` : ''}
-          </div>
-          <div class="wk-ex-rest">Descanso: <input class="wk-rest-input" type="number" inputmode="numeric" step="5" min="0" value="${ex.rs}" onchange="wkExRest(${exIx},this.value)">s</div>
-        </div>
-        ${setsHtml}
-        <div class="wk-ex-actions">
-          <button onclick="wkSetAdd(${exIx})">+ série</button>
-          <button onclick="wkExResetAutofill(${exIx})" title="Volta ao autofill da última sessão">↺ autofill</button>
-        </div>
-      </div>`;
+      html += `</div>`;
     });
     wkExecBody.innerHTML = html;
     _syncFooter();
@@ -1414,16 +1448,17 @@
 
   // Atualiza só as classes 'done' das rows sem reconstruir os inputs.
   // Usado quando renderWkExec é chamado com input em foco (race do tick).
+  // Usa data-ex/data-set pra bater com wkState.exs — como agrupamos por grupo
+  // muscular no render, a ordem visual do DOM não bate mais com wkState.exs.
   function _syncRowDoneClasses() {
     if (!wkState) return;
     const rows = wkExecBody.querySelectorAll('.wk-set-row');
-    let idx = 0;
-    for (const ex of wkState.exs) {
-      for (const s of ex.sets) {
-        const row = rows[idx++];
-        if (row) row.classList.toggle('done', !!s.done);
-      }
-    }
+    rows.forEach(row => {
+      const exIx = parseInt(row.dataset.ex, 10);
+      const setIx = parseInt(row.dataset.set, 10);
+      const s = wkState.exs[exIx]?.sets?.[setIx];
+      if (s) row.classList.toggle('done', !!s.done);
+    });
   }
 
   // Render do footer (separado pra reusar no renderWkExec e no caso de skip do body)
