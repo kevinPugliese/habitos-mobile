@@ -732,7 +732,6 @@
   const dateLabelEl = document.getElementById('dateLabel');
   const DOW_LBL = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   const MES_LBL = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  const LAST_PAYLOAD_KEY = 'mobileLastPayload';
 
   // ─── Estado ────────────────────────────────────────────────────
   let view = null;            // { v, d, items: [...] }
@@ -762,16 +761,17 @@
     const buf = await new Response(stream).arrayBuffer();
     return new TextDecoder().decode(buf);
   }
-  // Aceita URL completa, "#d=..", "d=..", "#w=..", "w=.." ou base64url puro.
-  // Retorna { b64, kind:'day'|'week' } ou null.
+  // Aceita URL completa, "#s=..", "s=.." ou base64url puro. Retorna
+  // { b64, kind:'schedule' } — mobile hoje só entende payload de cronograma.
   function extractPayload(text) {
     if (!text) return null;
     const s = String(text).trim();
-    let m = s.match(/#w=([A-Za-z0-9_\-]+)/) || s.match(/^w=([A-Za-z0-9_\-]+)$/);
-    if (m) return { b64: m[1], kind: 'week' };
-    m = s.match(/#d=([A-Za-z0-9_\-]+)/) || s.match(/^d=([A-Za-z0-9_\-]+)$/);
-    if (m) return { b64: m[1], kind: 'day' };
-    if (/^[A-Za-z0-9_\-]{40,}$/.test(s)) return { b64: s, kind: 'day' };
+    let m = s.match(/#s=([A-Za-z0-9_\-]+)/) || s.match(/^s=([A-Za-z0-9_\-]+)$/);
+    if (m) return { b64: m[1], kind: 'schedule' };
+    // Legacy: aceita #d= / #w= tratando como schedule pra migração suave.
+    m = s.match(/#[dw]=([A-Za-z0-9_\-]+)/);
+    if (m) return { b64: m[1], kind: 'schedule' };
+    if (/^[A-Za-z0-9_\-]{40,}$/.test(s)) return { b64: s, kind: 'schedule' };
     return null;
   }
 
@@ -794,43 +794,32 @@
     saveLocalChecks(view.d);
   }
 
-  // ─── Cache de dias (semana) ────────────────────────────────────
-  const DAY_CACHE_PREFIX = 'mobileDay:';
-  const WEEK_DATES_KEY = 'mobileWeekDates';
-  let cachedWeekDates = [];
+  // ─── Cronograma fixo de treinos (por dia da semana) ────────────
+  // O desktop empurra 1x (via QR) o schedule dow→wks[]. Fica cacheado no
+  // localStorage e usado eternamente — não precisa re-importar toda semana.
+  const SCHEDULE_KEY = 'mobileSchedule';
+  let mobileSchedule = null; // { "0": [wk], "1": [wk,wk], ..., "6": [wk] }
   try {
-    const raw = localStorage.getItem(WEEK_DATES_KEY);
-    if (raw) cachedWeekDates = JSON.parse(raw) || [];
+    const raw = localStorage.getItem(SCHEDULE_KEY);
+    if (raw) mobileSchedule = JSON.parse(raw);
   } catch {}
 
   function todayISO() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }
-  function _saveDayToCache(dayView) {
-    if (!dayView || !dayView.d) return;
-    try { localStorage.setItem(DAY_CACHE_PREFIX + dayView.d, JSON.stringify(dayView)); } catch {}
-  }
-  function _loadDayFromCache(date) {
-    try {
-      const raw = localStorage.getItem(DAY_CACHE_PREFIX + date);
-      const parsed = raw ? JSON.parse(raw) : null;
-      _normalizeDayView(parsed);
-      return parsed;
-    } catch { return null; }
-  }
-  // Legacy → novo: converte { wk: {...} } em { wks: [{...}] } e vice-versa
-  // pra manter backward-compat com o código de render que ainda usa view.wk.
+  function todayDow() { return new Date().getDay(); }
+
+  // Normaliza wks (garante view.wk = view.wks[view._wkIx || 0]).
   function _normalizeDayView(v) {
     if (!v) return;
     if (Array.isArray(v.wks) && v.wks.length > 0) {
-      // Novo formato — garante que view.wk aponta pro workout ativo (0 default).
       const ix = (typeof v._wkIx === 'number' && v._wkIx >= 0 && v._wkIx < v.wks.length) ? v._wkIx : 0;
       v._wkIx = ix;
       v.wk = v.wks[ix];
-    } else if (v.wk && !v.wks) {
-      // Legacy — embrulha em array pra o render iterar
-      v.wks = [v.wk];
+    } else {
+      v.wks = [];
+      v.wk = null;
       v._wkIx = 0;
     }
   }
@@ -838,7 +827,6 @@
   function selectWkForExec(ix) {
     if (!view || !Array.isArray(view.wks) || ix < 0 || ix >= view.wks.length) return;
     const target = view.wks[ix];
-    // Se mudou de template, descarta wkState atual (será recarregado do storage).
     if (wkState && wkState.tplId !== target.tplId) wkState = null;
     view._wkIx = ix;
     view.wk = target;
@@ -848,46 +836,39 @@
     if (typeof openWkExec === 'function') openWkExec();
   };
 
+  // Constrói `view` para um DOW específico. `dow`: 0=Dom..6=Sáb. `dateISO` é
+  // sempre a data de HOJE (execuções e adhocs vinculam ao dia real, não ao
+  // slot no cronograma).
+  function _buildViewForDow(dow) {
+    const wks = mobileSchedule ? (mobileSchedule[String(dow)] || []) : [];
+    const v = { d: todayISO(), dow: dow, wks: wks, items: [] };
+    _normalizeDayView(v);
+    return v;
+  }
+
   // ─── Carga de payload ──────────────────────────────────────────
-  // Aceita { b64, kind:'day'|'week' } OU string legacy (day).
+  // Aceita { b64, kind:'schedule' } OU string legacy (quando vem só o b64
+  // do hash, assume que é schedule).
   async function loadPayload(payload) {
     try {
-      const obj = (typeof payload === 'string') ? { b64: payload, kind: 'day' } : payload;
+      const obj = (typeof payload === 'string') ? { b64: payload, kind: 'schedule' } : payload;
       const json = await gunzipB64Url(obj.b64);
       const parsed = JSON.parse(json);
-      if (obj.kind === 'week') {
-        if (!parsed || !Array.isArray(parsed.days)) throw new Error('Payload semanal inválido');
-        // Cacheia cada dia individualmente (normalizando legacy wk → wks)
-        const dates = [];
-        for (const dv of parsed.days) {
-          if (dv && dv.d && Array.isArray(dv.items)) {
-            _normalizeDayView(dv);
-            _saveDayToCache(dv);
-            dates.push(dv.d);
-          }
-        }
-        cachedWeekDates = dates;
-        try { localStorage.setItem(WEEK_DATES_KEY, JSON.stringify(dates)); } catch {}
-        // Carrega o dia de hoje se estiver na semana; senão o primeiro.
-        const today = todayISO();
-        const targetDate = dates.includes(today) ? today : dates[0];
-        const targetView = _loadDayFromCache(targetDate);
-        if (!targetView) throw new Error('Nenhum dia disponível no payload');
-        view = targetView;
-        history.replaceState(null, '', '#w=' + obj.b64);
-      } else {
-        if (!parsed || !Array.isArray(parsed.items)) throw new Error('Payload inválido');
-        _normalizeDayView(parsed);
-        view = parsed;
-        _saveDayToCache(view);
-        localStorage.setItem(LAST_PAYLOAD_KEY, obj.b64);
-        history.replaceState(null, '', '#d=' + obj.b64);
+      if (!parsed || typeof parsed.schedule !== 'object' || parsed.schedule === null) {
+        throw new Error('Payload de cronograma inválido');
       }
+      // Salva o schedule pra uso eterno (até o próximo QR sobrescrever)
+      mobileSchedule = parsed.schedule;
+      try { localStorage.setItem(SCHEDULE_KEY, JSON.stringify(mobileSchedule)); } catch {}
+      // Monta view do dia atual
+      view = _buildViewForDow(todayDow());
+      history.replaceState(null, '', '#s=' + obj.b64);
       loadLocalChecks(view.d);
       loadAdhoc(view.d);
       initDateLabel();
       renderDayNav();
       render();
+      toast('✓ Cronograma sincronizado');
       return true;
     } catch (e) {
       root.innerHTML = '<div class="empty">Erro ao decodificar: ' + esc(String(e.message || e)) + '</div>';
@@ -895,32 +876,30 @@
     }
   }
 
-  // ─── Navegação entre dias cacheados ────────────────────────────
+  // ─── Navegação entre dias da semana (DOW-based) ────────────────
   const DOW_SHORT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   function renderDayNav() {
     const bar = document.getElementById('dayNav');
     const strip = document.getElementById('dayNavStrip');
     if (!bar || !strip) return;
-    if (cachedWeekDates.length < 2) { bar.hidden = true; return; }
+    if (!mobileSchedule) { bar.hidden = true; return; }
     bar.hidden = false;
-    const today = todayISO();
-    strip.innerHTML = cachedWeekDates.map(d => {
-      const [y, m, dd] = d.split('-').map(Number);
-      const dt = new Date(y || 2000, (m||1)-1, dd||1);
-      const dowLbl = DOW_SHORT[dt.getDay()] || '';
+    const today = todayDow();
+    const activeDow = view?.dow ?? today;
+    strip.innerHTML = DOW_SHORT.map((lbl, dow) => {
+      const wkCount = (mobileSchedule[String(dow)] || []).length;
       const cls = 'day-nav-day'
-        + (d === view?.d ? ' active' : '')
-        + (d === today ? ' today' : '');
-      return `<button class="${cls}" onclick="switchToDay('${d}')">${dowLbl} ${dd || ''}</button>`;
+        + (dow === activeDow ? ' active' : '')
+        + (dow === today ? ' today' : '');
+      const badge = wkCount > 0 ? ` <small style="opacity:.7">${wkCount}</small>` : '';
+      return `<button class="${cls}" onclick="switchToDow(${dow})">${lbl}${badge}</button>`;
     }).join('');
-    // Rola pro dia ativo
     const active = strip.querySelector('.day-nav-day.active');
     if (active) active.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'instant' });
   }
-  window.switchToDay = function(date) {
-    const dv = _loadDayFromCache(date);
-    if (!dv) { toast('Dia não cacheado'); return; }
-    view = dv;
+  window.switchToDow = function(dow) {
+    if (!mobileSchedule) return;
+    view = _buildViewForDow(dow);
     loadLocalChecks(view.d);
     loadAdhoc(view.d);
     initDateLabel();
@@ -928,26 +907,32 @@
     render();
   };
   window.dayNavStep = function(delta) {
-    if (cachedWeekDates.length === 0 || !view) return;
-    const ix = cachedWeekDates.indexOf(view.d);
-    const next = cachedWeekDates[Math.min(cachedWeekDates.length - 1, Math.max(0, ix + delta))];
-    if (next && next !== view.d) switchToDay(next);
+    if (!view) return;
+    const cur = view.dow ?? todayDow();
+    const next = Math.max(0, Math.min(6, cur + (parseInt(delta, 10) || 0)));
+    if (next !== cur) switchToDow(next);
   };
 
   function initDateLabel() {
     if (!view) return;
-    const [yy, mm, dd] = (view.d || '').split('-').map(Number);
-    const dt = new Date(yy || 2000, (mm||1)-1, dd||1);
-    dateLabelEl.innerHTML = (DOW_LBL[dt.getDay()] || '') +
-      ' <small>' + (dd || '') + ' ' + (MES_LBL[(mm||1)-1] || '') + ' ' + (yy || '') + '</small>';
+    const today = todayISO();
+    const [yy, mm, dd] = today.split('-').map(Number);
+    const dt = new Date(yy, mm - 1, dd);
+    const isToday = view.dow === dt.getDay();
+    const dowLbl = DOW_LBL[view.dow ?? dt.getDay()] || '';
+    if (isToday) {
+      dateLabelEl.innerHTML = dowLbl + ' <small>' + dd + ' ' + MES_LBL[mm - 1] + ' ' + yy + '</small>';
+    } else {
+      dateLabelEl.innerHTML = dowLbl + ' <small style="color:var(--accent)">prévia</small>';
+    }
   }
 
   function showEmptyState() {
-    dateLabelEl.textContent = '📲 Plano do dia';
+    dateLabelEl.textContent = '📲 Sem cronograma';
     summaryEl.innerHTML = '';
     root.innerHTML = '<div class="empty">' +
-      '📷 Toque no botão <b>📷</b> no topo pra escanear o QR Code do desktop.<br><br>' +
-      '<small>Ou cole a URL completa lá no scanner depois de abrir.</small>' +
+      '📷 Toque em <b>Escanear QR</b> na barra inferior pra sincronizar o cronograma de treinos com o desktop.<br><br>' +
+      '<small>Feito 1x — o cronograma fica salvo aqui e se repete toda semana. Só precisa re-escanear quando mudar seus treinos.</small>' +
       '</div>';
   }
 
@@ -2017,32 +2002,38 @@
     });
   }
 
-  // ─── Boot: hash > cache de hoje > localStorage antigo > vazio ─
+  // ─── Boot: hash > cronograma cacheado > vazio ─────────────────
   (async function init() {
     const hashPayload = extractPayload(location.hash || '');
     if (hashPayload) {
       await loadPayload(hashPayload);
+    } else if (mobileSchedule) {
+      // Já temos cronograma no cache — monta view do dia atual
+      view = _buildViewForDow(todayDow());
+      loadLocalChecks(view.d);
+      loadAdhoc(view.d);
+      initDateLabel();
+      renderDayNav();
+      render();
     } else {
-      // Fallback 1: cache da semana — se hoje está cacheado, mostra
-      const today = todayISO();
-      const cachedToday = _loadDayFromCache(today);
-      if (cachedToday) {
-        view = cachedToday;
+      showEmptyState();
+    }
+    // Se o app fica aberto durante a virada do dia, atualiza view.
+    setInterval(() => {
+      if (!view) return;
+      const nowDow = todayDow();
+      if (view.d !== todayISO()) {
+        // Muda pra hoje automaticamente na virada de dia (se estava mostrando "hoje")
+        view = _buildViewForDow(nowDow);
         loadLocalChecks(view.d);
         loadAdhoc(view.d);
         initDateLabel();
         renderDayNav();
         render();
       } else {
-        // Fallback 2: último payload legacy
-        let b64 = null;
-        try { b64 = localStorage.getItem(LAST_PAYLOAD_KEY); } catch {}
-        if (b64) await loadPayload({ b64, kind: 'day' });
-        else showEmptyState();
+        render();
       }
-    }
-    // Re-render a cada minuto
-    setInterval(() => { if (view) render(); }, 60000);
+    }, 60000);
   })();
 })();
 </script>
