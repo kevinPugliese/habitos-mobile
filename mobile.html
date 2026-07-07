@@ -60,13 +60,67 @@
   }
   .h-btn:active { background: var(--surface3); }
   .h-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  /* ─── Navegação entre dias (payload semanal) ─── */
+  .day-nav {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px; background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 9;
+  }
+  .day-nav-btn {
+    background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 12px; font-size: .82rem;
+    cursor: pointer; font-family: inherit; font-weight: 700; flex-shrink: 0;
+  }
+  .day-nav-btn:active { background: var(--surface3); }
+  .day-nav-strip {
+    flex: 1; min-width: 0; display: flex; gap: 4px;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .day-nav-strip::-webkit-scrollbar { display: none; }
+  .day-nav-day {
+    flex: 0 0 auto; padding: 4px 10px;
+    background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
+    border-radius: 999px; font-size: .74rem; font-weight: 600; cursor: pointer;
+    white-space: nowrap;
+  }
+  .day-nav-day.today { border-color: var(--accent); color: var(--accent); }
+  .day-nav-day.active {
+    background: var(--accent); color: #fff; border-color: var(--accent);
+  }
   .summary {
     padding: 10px 16px; background: var(--surface);
     display: flex; gap: 10px; flex-wrap: wrap; font-size: .78rem;
     border-bottom: 1px solid var(--border); color: var(--text3);
   }
   .summary b { color: var(--text); }
-  main { padding: 8px 12px 32px; }
+  main { padding: 8px 12px 100px; } /* espaço pra bottom bar não cobrir conteúdo */
+
+  /* ─── Bottom bar fixa (QR + Adicionar tarefa) ─── */
+  .bottom-bar {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    display: flex; gap: 10px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom)) 12px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 12px rgba(0,0,0,.25);
+    z-index: 100;
+  }
+  .bottom-bar.hidden { display: none; }
+  .bottom-btn {
+    flex: 1; min-height: 56px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px;
+    cursor: pointer; font-family: inherit; font-weight: 700;
+    font-size: 1rem;
+  }
+  .bottom-btn:active { background: var(--surface3); transform: scale(.98); }
+  .bottom-btn.primary {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+  }
+  .bottom-btn-ico { font-size: 1.4rem; line-height: 1; }
+  .bottom-btn-lbl { font-size: .92rem; }
   .empty {
     text-align: center; color: var(--text3); padding: 60px 20px;
     font-size: .9rem;
@@ -174,22 +228,7 @@
     color: var(--text2); font-weight: 600;
   }
 
-  /* ─── Filtros (sheet) ─── */
-  .filter-chips {
-    display: flex; gap: 6px; padding: 8px 12px;
-    overflow-x: auto; -webkit-overflow-scrolling: touch;
-    background: var(--surface); border-bottom: 1px solid var(--border);
-  }
-  .filter-chip {
-    flex: 0 0 auto;
-    background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
-    border-radius: 999px; padding: 6px 12px; font-size: .76rem; font-weight: 600;
-    cursor: pointer; font-family: inherit; white-space: nowrap;
-  }
-  .filter-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .filter-chip.clear { color: var(--text3); }
-
-  /* ─── Ad-hoc sheet (cadastro de tarefa feita) ─── */
+  /* ─── Ad-hoc sheet (cadastro de tarefa pra fazer) ─── */
   .field-label { display: block; font-size: .76rem; font-weight: 700; color: var(--text2); margin: 10px 0 4px; }
   .field-input {
     width: 100%; padding: 10px 12px; background: var(--bg);
@@ -251,7 +290,7 @@
   /* Export checks modal */
   .overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,.6);
-    z-index: 50; display: none; align-items: flex-end; justify-content: center;
+    z-index: 200; display: none; align-items: flex-end; justify-content: center;
     padding: 0;
   }
   .overlay.open { display: flex; }
@@ -478,7 +517,7 @@
 
   /* Scanner */
   .scan-overlay {
-    position: fixed; inset: 0; z-index: 60;
+    position: fixed; inset: 0; z-index: 210;
     background: #000; display: none; flex-direction: column;
   }
   .scan-overlay.open { display: flex; }
@@ -550,14 +589,31 @@
 <header>
   <div class="h-date" id="dateLabel">—</div>
   <div class="h-actions">
-    <button class="h-btn primary" onclick="openScanner()" title="Escanear QR Code do desktop">📷</button>
-    <button class="h-btn" onclick="openAdhocSheet()" title="Cadastrar tarefa feita ad-hoc">➕</button>
     <button class="h-btn" onclick="openExportSheet()" title="Repassar checks pro desktop">📋</button>
     <button class="h-btn" onclick="location.reload()" title="Recarregar">↻</button>
   </div>
 </header>
 
+<!-- Navegação entre dias cacheados (aparece quando payload semanal foi carregado) -->
+<div id="dayNav" class="day-nav" hidden>
+  <button class="day-nav-btn" onclick="dayNavStep(-1)" title="Dia anterior">◀</button>
+  <div class="day-nav-strip" id="dayNavStrip"></div>
+  <button class="day-nav-btn" onclick="dayNavStep(1)" title="Próximo dia">▶</button>
+</div>
+
 <div class="summary" id="summary"></div>
+
+<!-- Barra inferior fixa — QR scanner + adicionar tarefa. Some quando o treino está aberto. -->
+<nav id="bottomBar" class="bottom-bar">
+  <button class="bottom-btn primary" onclick="openScanner()" title="Escanear QR Code do desktop">
+    <span class="bottom-btn-ico">📷</span>
+    <span class="bottom-btn-lbl">Escanear QR</span>
+  </button>
+  <button class="bottom-btn" onclick="openAdhocSheet()" title="Adicionar nova tarefa pra fazer">
+    <span class="bottom-btn-ico">➕</span>
+    <span class="bottom-btn-lbl">Nova tarefa</span>
+  </button>
+</nav>
 
 <!-- Banner de instalação PWA -->
 <div class="install-banner" id="installBanner">
@@ -587,17 +643,16 @@
   </div>
 </div>
 
-<div class="filter-chips" id="filterChips"></div>
 
 <div id="wkCard"></div>
 
-<!-- ─── Sheet: cadastro de tarefa feita ad-hoc ─── -->
+<!-- ─── Sheet: cadastro de nova tarefa (pra fazer) ─── -->
 <div class="overlay" id="adhocSheet" onclick="if(event.target===this)closeAdhocSheet()">
   <div class="sheet">
-    <h3 id="adhocSheetTitle">➕ Tarefa feita</h3>
-    <div class="info">Cadastra uma tarefa que você fez agora — vai pro export junto com os checks.</div>
-    <label class="field-label">O que você fez</label>
-    <input type="text" id="adhocText" class="field-input" placeholder="Ex: Liguei pro cliente, organizei documentos…" maxlength="120">
+    <h3 id="adhocSheetTitle">➕ Nova tarefa</h3>
+    <div class="info">Cadastra uma tarefa pra fazer — marque como feita depois no ✓. Vai pro export junto com os checks.</div>
+    <label class="field-label">O que precisa fazer</label>
+    <input type="text" id="adhocText" class="field-input" placeholder="Ex: Ligar pro cliente, organizar documentos…" maxlength="120">
     <label class="field-label">Pontuação</label>
     <input type="number" id="adhocScore" class="field-input" inputmode="numeric" min="0" step="10" value="50">
     <div class="adhoc-quick">
@@ -707,15 +762,16 @@
     const buf = await new Response(stream).arrayBuffer();
     return new TextDecoder().decode(buf);
   }
-  // Aceita URL completa, "#d=..", "d=.." ou base64url puro. Retorna o base64 ou null.
+  // Aceita URL completa, "#d=..", "d=..", "#w=..", "w=.." ou base64url puro.
+  // Retorna { b64, kind:'day'|'week' } ou null.
   function extractPayload(text) {
     if (!text) return null;
     const s = String(text).trim();
-    const m1 = s.match(/#d=([A-Za-z0-9_\-]+)/);
-    if (m1) return m1[1];
-    const m2 = s.match(/^d=([A-Za-z0-9_\-]+)$/);
-    if (m2) return m2[1];
-    if (/^[A-Za-z0-9_\-]{40,}$/.test(s)) return s;
+    let m = s.match(/#w=([A-Za-z0-9_\-]+)/) || s.match(/^w=([A-Za-z0-9_\-]+)$/);
+    if (m) return { b64: m[1], kind: 'week' };
+    m = s.match(/#d=([A-Za-z0-9_\-]+)/) || s.match(/^d=([A-Za-z0-9_\-]+)$/);
+    if (m) return { b64: m[1], kind: 'day' };
+    if (/^[A-Za-z0-9_\-]{40,}$/.test(s)) return { b64: s, kind: 'day' };
     return null;
   }
 
@@ -738,21 +794,99 @@
     saveLocalChecks(view.d);
   }
 
-  // ─── Carga de payload ──────────────────────────────────────────
-  async function loadPayload(b64) {
+  // ─── Cache de dias (semana) ────────────────────────────────────
+  const DAY_CACHE_PREFIX = 'mobileDay:';
+  const WEEK_DATES_KEY = 'mobileWeekDates';
+  let cachedWeekDates = [];
+  try {
+    const raw = localStorage.getItem(WEEK_DATES_KEY);
+    if (raw) cachedWeekDates = JSON.parse(raw) || [];
+  } catch {}
+
+  function todayISO() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function _saveDayToCache(dayView) {
+    if (!dayView || !dayView.d) return;
+    try { localStorage.setItem(DAY_CACHE_PREFIX + dayView.d, JSON.stringify(dayView)); } catch {}
+  }
+  function _loadDayFromCache(date) {
     try {
-      const json = await gunzipB64Url(b64);
+      const raw = localStorage.getItem(DAY_CACHE_PREFIX + date);
+      const parsed = raw ? JSON.parse(raw) : null;
+      _normalizeDayView(parsed);
+      return parsed;
+    } catch { return null; }
+  }
+  // Legacy → novo: converte { wk: {...} } em { wks: [{...}] } e vice-versa
+  // pra manter backward-compat com o código de render que ainda usa view.wk.
+  function _normalizeDayView(v) {
+    if (!v) return;
+    if (Array.isArray(v.wks) && v.wks.length > 0) {
+      // Novo formato — garante que view.wk aponta pro workout ativo (0 default).
+      const ix = (typeof v._wkIx === 'number' && v._wkIx >= 0 && v._wkIx < v.wks.length) ? v._wkIx : 0;
+      v._wkIx = ix;
+      v.wk = v.wks[ix];
+    } else if (v.wk && !v.wks) {
+      // Legacy — embrulha em array pra o render iterar
+      v.wks = [v.wk];
+      v._wkIx = 0;
+    }
+  }
+  // Seleciona qual workout do dia é o "ativo" (usado pelo overlay de execução).
+  function selectWkForExec(ix) {
+    if (!view || !Array.isArray(view.wks) || ix < 0 || ix >= view.wks.length) return;
+    const target = view.wks[ix];
+    // Se mudou de template, descarta wkState atual (será recarregado do storage).
+    if (wkState && wkState.tplId !== target.tplId) wkState = null;
+    view._wkIx = ix;
+    view.wk = target;
+  }
+  window.selectAndOpenWk = function(ix) {
+    selectWkForExec(ix);
+    if (typeof openWkExec === 'function') openWkExec();
+  };
+
+  // ─── Carga de payload ──────────────────────────────────────────
+  // Aceita { b64, kind:'day'|'week' } OU string legacy (day).
+  async function loadPayload(payload) {
+    try {
+      const obj = (typeof payload === 'string') ? { b64: payload, kind: 'day' } : payload;
+      const json = await gunzipB64Url(obj.b64);
       const parsed = JSON.parse(json);
-      if (!parsed || !Array.isArray(parsed.items)) throw new Error('Payload inválido');
-      view = parsed;
-      localStorage.setItem(LAST_PAYLOAD_KEY, b64);
-      history.replaceState(null, '', '#d=' + b64);
+      if (obj.kind === 'week') {
+        if (!parsed || !Array.isArray(parsed.days)) throw new Error('Payload semanal inválido');
+        // Cacheia cada dia individualmente (normalizando legacy wk → wks)
+        const dates = [];
+        for (const dv of parsed.days) {
+          if (dv && dv.d && Array.isArray(dv.items)) {
+            _normalizeDayView(dv);
+            _saveDayToCache(dv);
+            dates.push(dv.d);
+          }
+        }
+        cachedWeekDates = dates;
+        try { localStorage.setItem(WEEK_DATES_KEY, JSON.stringify(dates)); } catch {}
+        // Carrega o dia de hoje se estiver na semana; senão o primeiro.
+        const today = todayISO();
+        const targetDate = dates.includes(today) ? today : dates[0];
+        const targetView = _loadDayFromCache(targetDate);
+        if (!targetView) throw new Error('Nenhum dia disponível no payload');
+        view = targetView;
+        history.replaceState(null, '', '#w=' + obj.b64);
+      } else {
+        if (!parsed || !Array.isArray(parsed.items)) throw new Error('Payload inválido');
+        _normalizeDayView(parsed);
+        view = parsed;
+        _saveDayToCache(view);
+        localStorage.setItem(LAST_PAYLOAD_KEY, obj.b64);
+        history.replaceState(null, '', '#d=' + obj.b64);
+      }
       loadLocalChecks(view.d);
       loadAdhoc(view.d);
-      loadCollapse(view.d);
-      loadFilter();
       initDateLabel();
-      renderFilterChips();
+      renderDayNav();
       render();
       return true;
     } catch (e) {
@@ -760,6 +894,45 @@
       return false;
     }
   }
+
+  // ─── Navegação entre dias cacheados ────────────────────────────
+  const DOW_SHORT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  function renderDayNav() {
+    const bar = document.getElementById('dayNav');
+    const strip = document.getElementById('dayNavStrip');
+    if (!bar || !strip) return;
+    if (cachedWeekDates.length < 2) { bar.hidden = true; return; }
+    bar.hidden = false;
+    const today = todayISO();
+    strip.innerHTML = cachedWeekDates.map(d => {
+      const [y, m, dd] = d.split('-').map(Number);
+      const dt = new Date(y || 2000, (m||1)-1, dd||1);
+      const dowLbl = DOW_SHORT[dt.getDay()] || '';
+      const cls = 'day-nav-day'
+        + (d === view?.d ? ' active' : '')
+        + (d === today ? ' today' : '');
+      return `<button class="${cls}" onclick="switchToDay('${d}')">${dowLbl} ${dd || ''}</button>`;
+    }).join('');
+    // Rola pro dia ativo
+    const active = strip.querySelector('.day-nav-day.active');
+    if (active) active.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'instant' });
+  }
+  window.switchToDay = function(date) {
+    const dv = _loadDayFromCache(date);
+    if (!dv) { toast('Dia não cacheado'); return; }
+    view = dv;
+    loadLocalChecks(view.d);
+    loadAdhoc(view.d);
+    initDateLabel();
+    renderDayNav();
+    render();
+  };
+  window.dayNavStep = function(delta) {
+    if (cachedWeekDates.length === 0 || !view) return;
+    const ix = cachedWeekDates.indexOf(view.d);
+    const next = cachedWeekDates[Math.min(cachedWeekDates.length - 1, Math.max(0, ix + delta))];
+    if (next && next !== view.d) switchToDay(next);
+  };
 
   function initDateLabel() {
     if (!view) return;
@@ -778,34 +951,10 @@
       '</div>';
   }
 
-  // ─── Estado adicional: ad-hoc / collapse / filtros ─────────────
-  let adhocTasks = []; // [{ id, text, score, doneAt }]
-  let collapse  = { wd: false, slots: [] }; // collapsed slots by hour
-  let activeFilter = null;        // null = todos; string = tipo único
-  const FILTERS_KEY = 'mobileFilters';
-
-  // Map tipo → label/ícone curto pros chips de filtro
-  const FILTER_DEFS = [
-    { t: null,       label: 'Todos', icon: '☰' },
-    { t: 'habit',    label: 'Hábito', icon: '🔁' },
-    { t: 'task',     label: 'Tarefa', icon: '⭐' },
-    { t: 'adhoc',    label: 'Ad-hoc', icon: '➕' },
-    { t: 'wd',       label: 'Rotina', icon: '⚡' },
-    { t: 'mtg',      label: 'Reunião', icon: '📅' },
-    { t: 'study',    label: 'Estudo', icon: '🎓' },
-    { t: 'proj',     label: 'Projeto', icon: '📁' },
-    { t: 'trip',     label: 'Viagem', icon: '✈️' },
-    { t: 'tripitem', label: 'Item viagem', icon: '🧳' },
-    { t: 'run',      label: 'Cardio', icon: '🏃' },
-    { t: 'tabfocus', label: 'Foco', icon: '🎯' },
-    { t: 'desc',     label: 'Desc. dia', icon: '📝' },
-    { t: 'sleep',    label: 'Sono', icon: '🌙' },
-    { t: 'event',    label: 'Evento', icon: '📌' },
-    { t: 'exp',      label: 'Pagamento', icon: '💸' },
-  ];
+  // ─── Estado adicional: ad-hoc tasks ────────────────────────────
+  let adhocTasks = []; // [{ id, text, score, done, doneAt?, createdAt }]
 
   function adhocKey(date) { return 'mobileAdhoc:' + date; }
-  function collapseKey(date) { return 'mobileCollapse:' + date; }
 
   function loadAdhoc(date) {
     try { adhocTasks = JSON.parse(localStorage.getItem(adhocKey(date)) || '[]'); }
@@ -815,107 +964,25 @@
   function saveAdhocList(date) {
     try { localStorage.setItem(adhocKey(date), JSON.stringify(adhocTasks)); } catch {}
   }
-  function loadCollapse(date) {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(collapseKey(date)) || '{}');
-      collapse = { wd: !!parsed.wd, slots: Array.isArray(parsed.slots) ? parsed.slots : [] };
-    } catch { collapse = { wd: false, slots: [] }; }
-  }
-  function saveCollapse(date) {
-    try { localStorage.setItem(collapseKey(date), JSON.stringify(collapse)); } catch {}
-  }
-  function loadFilter() {
-    try { activeFilter = localStorage.getItem(FILTERS_KEY) || null; }
-    catch { activeFilter = null; }
-    if (activeFilter === 'null') activeFilter = null;
-  }
-  function saveFilter() {
-    try {
-      if (activeFilter) localStorage.setItem(FILTERS_KEY, activeFilter);
-      else localStorage.removeItem(FILTERS_KEY);
-    } catch {}
-  }
-
-  // ─── Filtro chips render ───────────────────────────────────────
-  function renderFilterChips() {
-    const wrap = document.getElementById('filterChips');
-    if (!wrap) return;
-    // Quais tipos efetivamente existem no payload? Esconde os vazios.
-    const present = new Set();
-    if (view) view.items.forEach(it => present.add(it.t));
-    if (adhocTasks.length) present.add('adhoc');
-    let html = '';
-    for (const f of FILTER_DEFS) {
-      if (f.t !== null && !present.has(f.t)) continue;
-      const cls = (activeFilter === f.t) ? 'filter-chip active' : 'filter-chip';
-      html += `<button class="${cls}" onclick="setFilter(${f.t === null ? 'null' : `'${f.t}'`})">${f.icon} ${f.label}</button>`;
-    }
-    wrap.innerHTML = html;
-  }
-  window.setFilter = function (t) {
-    activeFilter = t;
-    saveFilter();
-    render();
-  };
 
   // ─── Render principal ──────────────────────────────────────────
   function render() {
     if (!view) { showEmptyState(); return; }
-    const filterT = activeFilter;
-    const passFilter = (t) => !filterT || filterT === t;
-
-    const wd = view.items.filter(it => it.h < 0);
-    const timed = view.items.filter(it => it.h >= 0);
-
-    const byHour = new Map();
-    timed.forEach((it) => {
-      const realIx = view.items.indexOf(it);
-      if (!byHour.has(it.h)) byHour.set(it.h, []);
-      byHour.get(it.h).push({ it, ix: realIx });
-    });
-
-    const now = new Date();
-    const isTodayLoaded = view.d === now.toISOString().slice(0,10);
-    const curH = isTodayLoaded ? now.getHours() : -1;
 
     let html = '';
     let scoreTotal = 0;
+    let doneCount = 0;
 
-    // ── Bloco wd (rotinas) com collapse ──────────────────────────
-    if (wd.length && passFilter('wd')) {
-      let wdDone = 0;
-      const itemsHtml = wd.map(it => {
-        const realIx = view.items.indexOf(it);
-        const wdInfo = it.wd || { cur: 0, target: 1 };
-        const isMultiOrDone = wdInfo.cur >= wdInfo.target;
-        const done = isDone(it, realIx) || isMultiOrDone;
-        if (done) { wdDone++; if (it.sc) scoreTotal += it.sc; }
-        const score = it.sc ? ' +' + it.sc + 'pts' : '';
-        const progress = wdInfo.target > 1 ? ' (' + wdInfo.cur + '/' + wdInfo.target + ')' : '';
-        return '<div class="item ' + (done?'done':'') + '" data-t="wd" data-ix="' + realIx + '" onclick="toggle(' + realIx + ')">' +
-          '<span class="item-check">✓</span>' +
-          '<span class="item-name">' + esc(it.n) + progress + '</span>' +
-          '<span class="item-meta">' + score + '</span>' +
-        '</div>';
-      }).join('');
-      const cls = 'wd-block' + (collapse.wd ? ' collapsed' : '');
-      html += '<div class="' + cls + '">' +
-        '<div class="wd-block-head" onclick="toggleWdCollapse()">' +
-          '<span>⚡ Rotinas diárias</span>' +
-          '<span class="ct">' + wdDone + '/' + wd.length + '</span>' +
-          '<span class="chev">⌄</span>' +
-        '</div>' +
-        '<div class="wd-list">' + itemsHtml + '</div>' +
-      '</div>';
-    }
-
-    // ── Ad-hoc tasks (cadastradas no celular) ────────────────────
-    if (adhocTasks.length && passFilter('adhoc')) {
+    // ── Tarefas pra fazer (cadastradas no celular) ───────────────
+    // Cada tarefa vira um TODO com checkbox. Legado: entrada com doneAt
+    // (do fluxo antigo "tarefa feita") vem como done=true.
+    if (adhocTasks.length) {
       const itemsHtml = adhocTasks.map(at => {
-        scoreTotal += Number(at.score) || 0;
+        const isTaskDone = at.done === true || (at.done === undefined && !!at.doneAt);
+        if (isTaskDone) { doneCount++; if (at.score) scoreTotal += Number(at.score) || 0; }
         const sc = at.score ? ' +' + at.score + 'pts' : '';
-        const meta = at.doneAt ? ' · ' + String(at.doneAt).slice(11,16) : '';
-        return '<div class="item done" data-t="adhoc" data-aid="' + esc(at.id) + '">' +
+        const meta = isTaskDone && at.doneAt ? ' ✓ ' + String(at.doneAt).slice(11,16) : '';
+        return '<div class="item ' + (isTaskDone?'done':'') + '" data-t="adhoc" data-aid="' + esc(at.id) + '" onclick="toggleAdhoc(\'' + esc(at.id) + '\')">' +
           '<span class="item-check">✓</span>' +
           '<span class="item-icon">➕</span>' +
           '<span class="item-name">' + esc(at.text) + '</span>' +
@@ -924,104 +991,31 @@
         '</div>';
       }).join('');
       html += '<div class="wd-block"><div class="wd-block-head" style="cursor:default">' +
-        '<span>➕ Tarefas feitas no celular</span>' +
-        '<span class="ct">' + adhocTasks.length + '</span>' +
+        '<span>➕ Tarefas do celular</span>' +
+        '<span class="ct">' + doneCount + '/' + adhocTasks.length + '</span>' +
       '</div><div class="wd-list">' + itemsHtml + '</div></div>';
     }
 
-    // ── Slots por hora ───────────────────────────────────────────
-    const hours = [...byHour.keys()].sort((a,b) => a - b);
-    let nowLineInserted = false;
-    let timedCount = 0, timedDone = 0;
-    for (const h of hours) {
-      const itemsHere = byHour.get(h).filter(({ it }) => passFilter(it.t));
-      if (!itemsHere.length) continue;
-      if (isTodayLoaded && !nowLineInserted && h > curH && curH >= 0) {
-        html += '<div class="now-line"></div>';
-        nowLineInserted = true;
-      }
-      const isNow = h === curH;
-      const isCollapsed = collapse.slots.includes(h);
-      const slotCls = 'slot' + (isNow?' slot-now':'') + (isCollapsed && itemsHere.length >= 2 ? ' collapsed' : '');
-      let slotItems = '';
-      let slotDone = 0;
-      for (const { it, ix } of itemsHere) {
-        timedCount++;
-        const done = isDone(it, ix);
-        if (done) { slotDone++; timedDone++; if (it.sc) scoreTotal += it.sc; }
-        const time = it.time || '';
-        const dur = it.dur ? ' · ' + it.dur + 'min' : '';
-        const score = it.sc ? ' · +' + it.sc + 'pts' : '';
-        const hhmm = String(h).padStart(2,'0') + ':00';
-        const meta = (time && time !== hhmm) ? (time + dur + score) : (dur + score).trim();
-        const icon = it.ic || '';
-        slotItems += '<div class="item ' + (done?'done':'') + '" data-t="' + esc(it.t) + '" data-ix="' + ix + '" onclick="toggle(' + ix + ')">' +
-          '<span class="item-check">✓</span>' +
-          (icon ? '<span class="item-icon">' + esc(icon) + '</span>' : '') +
-          '<span class="item-name">' + esc(it.n) + '</span>' +
-          '<span class="item-meta">' + esc(meta) + '</span>' +
-        '</div>';
-      }
-      // Summary item visível só quando collapsed
-      if (itemsHere.length >= 2) {
-        slotItems += '<div class="item collapsed-summary" onclick="toggleSlotCollapse(' + h + ')">' +
-          '<span class="item-check"></span>' +
-          '<span class="item-name">' + slotDone + '/' + itemsHere.length + ' item' + (itemsHere.length===1?'':'s') + ' nesta hora — toque pra expandir</span>' +
-          '<span class="item-meta">⌄</span>' +
-        '</div>';
-      }
-      const collapseBtn = itemsHere.length >= 2
-        ? '<button class="slot-collapse" onclick="toggleSlotCollapse(' + h + ')" title="' + (isCollapsed?'Expandir':'Colapsar') + ' essa hora">' + (isCollapsed?'⌄':'⌃') + '</button>'
-        : '';
-      html += '<div class="' + slotCls + '"><div class="slot-hour">' + String(h).padStart(2,'0') + 'h</div><div class="slot-items">' + slotItems + collapseBtn + '</div></div>';
-    }
-    if (isTodayLoaded && !nowLineInserted && hours.length) {
-      html += '<div class="now-line"></div>';
-    }
-
     if (!html) {
-      html = '<div class="empty">' +
-        (filterT ? 'Nenhum item desse tipo no dia.' : 'Sem itens no plano deste dia.') +
+      html = '<div class="empty" style="padding:32px 20px;text-align:center">' +
+        '<div style="font-size:2rem;margin-bottom:8px">🏋</div>' +
+        '<div style="font-weight:600;margin-bottom:4px">Só treino e tarefas</div>' +
+        '<div style="color:var(--text3);font-size:.86rem">Toque em <b>➕</b> pra adicionar uma tarefa pra fazer.<br>O treino do dia aparece no topo (se cadastrado).</div>' +
       '</div>';
     }
 
     root.innerHTML = html;
 
-    // ── Summary com score total ──────────────────────────────────
-    const totalAll = timedCount + (passFilter('wd') ? wd.length : 0) + (passFilter('adhoc') ? adhocTasks.length : 0);
-    let doneAll = timedDone + (passFilter('adhoc') ? adhocTasks.length : 0);
-    if (passFilter('wd')) {
-      wd.forEach((it, i) => {
-        const realIx = view.items.indexOf(it);
-        const wdInfo = it.wd || { cur:0, target:1 };
-        if (isDone(it, realIx) || wdInfo.cur >= wdInfo.target) doneAll++;
-      });
-    }
-    const pct = totalAll ? Math.round(doneAll * 100 / totalAll) : 0;
+    // ── Summary compacto: só ad-hoc ──────────────────────────────
+    const totalAll = adhocTasks.length;
+    const pct = totalAll ? Math.round(doneCount * 100 / totalAll) : 0;
     const scorePill = scoreTotal > 0 ? ' <span class="score-pill">+' + scoreTotal + ' pts</span>' : '';
-    const filterChip = filterT
-      ? ' <span class="score-pill" style="background:rgba(245,158,11,.18);color:#f59e0b;border-color:rgba(245,158,11,.4);cursor:pointer" onclick="setFilter(null)">filtro ativo · limpar</span>'
-      : '';
-    summaryEl.innerHTML = '<span><b>' + doneAll + '/' + totalAll + '</b> feitos · ' + pct + '%</span>' +
-      scorePill + filterChip +
-      '<span style="margin-left:auto">' + totalAll + ' item' + (totalAll===1?'':'s') + '</span>';
+    if (totalAll > 0) {
+      summaryEl.innerHTML = '<span><b>' + doneCount + '/' + totalAll + '</b> feitas · ' + pct + '%</span>' + scorePill;
+    } else {
+      summaryEl.innerHTML = '';
+    }
   }
-
-  // ─── Toggle handlers ────────────────────────────────────────────
-  window.toggleWdCollapse = function () {
-    if (!view) return;
-    collapse.wd = !collapse.wd;
-    saveCollapse(view.d);
-    render();
-  };
-  window.toggleSlotCollapse = function (h) {
-    if (!view) return;
-    const ix = collapse.slots.indexOf(h);
-    if (ix >= 0) collapse.slots.splice(ix, 1);
-    else collapse.slots.push(h);
-    saveCollapse(view.d);
-    render();
-  };
 
   // ─── Ad-hoc handlers ────────────────────────────────────────────
   window.openAdhocSheet = function () {
@@ -1045,23 +1039,37 @@
   window.saveAdhoc = function () {
     const text = (document.getElementById('adhocText').value || '').trim();
     const score = Math.max(0, parseInt(document.getElementById('adhocScore').value, 10) || 0);
-    if (!text) { toast('⚠️ Escreva o que você fez'); return; }
+    if (!text) { toast('⚠️ Escreva o que precisa fazer'); return; }
     const date = view ? view.d : new Date().toISOString().slice(0,10);
     loadAdhoc(date);
     const id = 'a_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
-    adhocTasks.push({ id, text, score, doneAt: new Date().toISOString() });
+    // Nova tarefa nasce PENDENTE. Marca como feita depois via toggle.
+    adhocTasks.push({ id, text, score, done: false, createdAt: new Date().toISOString() });
     saveAdhocList(date);
     closeAdhocSheet();
-    toast('✓ Cadastrada (+' + score + 'pts)');
-    renderFilterChips();
+    toast('✓ Tarefa adicionada');
+    render();
+  };
+  window.toggleAdhoc = function (id) {
+    if (!view) return;
+    const at = adhocTasks.find(a => a.id === id);
+    if (!at) return;
+    const isDoneNow = at.done === true || (at.done === undefined && !!at.doneAt);
+    if (isDoneNow) {
+      at.done = false;
+      delete at.doneAt;
+    } else {
+      at.done = true;
+      at.doneAt = new Date().toISOString();
+    }
+    saveAdhocList(view.d);
     render();
   };
   window.removeAdhoc = function (id) {
     if (!view) return;
-    if (!confirm('Remover essa tarefa ad-hoc?')) return;
+    if (!confirm('Remover essa tarefa?')) return;
     adhocTasks = adhocTasks.filter(a => a.id !== id);
     saveAdhocList(view.d);
-    renderFilterChips();
     render();
   };
 
@@ -1332,29 +1340,31 @@
 
   function renderWkCard() {
     wkCardEl.innerHTML = '';
-    if (!view || !view.wk) return;
+    if (!view || !Array.isArray(view.wks) || view.wks.length === 0) return;
     const date = view.d;
-    const wk = view.wk;
-    const finished = !!localStorage.getItem(wkDoneKey(date, wk.tplId));
-    const resumed = !!localStorage.getItem(wkResumeKey(date, wk.tplId));
-    const cls = finished ? 'wk-card done' : 'wk-card';
-    const status = finished ? '✅ Finalizado' : (resumed ? '⏸ Em andamento' : '🆕 Pronto pra começar');
-    const meta = [
-      wk.time ? esc(wk.time) : '',
-      wk.durMins ? `${wk.durMins}min` : '',
-      wk.exs ? `${wk.exs.length} exercício${wk.exs.length===1?'':'s'}` : '',
-      status,
-    ].filter(Boolean).join(' · ');
-    wkCardEl.innerHTML = `
-      <div class="${cls}" onclick="openWkExec()">
-        <div class="wk-card-icon">🏋</div>
-        <div class="wk-card-body">
-          <div class="wk-card-title">${esc(wk.name)}</div>
-          <div class="wk-card-meta">${meta}</div>
+    const cards = view.wks.map((wk, ix) => {
+      const finished = !!localStorage.getItem(wkDoneKey(date, wk.tplId));
+      const resumed = !!localStorage.getItem(wkResumeKey(date, wk.tplId));
+      const cls = finished ? 'wk-card done' : 'wk-card';
+      const status = finished ? '✅ Finalizado' : (resumed ? '⏸ Em andamento' : '🆕 Pronto pra começar');
+      const meta = [
+        wk.time ? esc(wk.time) : '',
+        wk.durMins ? `${wk.durMins}min` : '',
+        wk.exs ? `${wk.exs.length} exercício${wk.exs.length===1?'':'s'}` : '',
+        status,
+      ].filter(Boolean).join(' · ');
+      return `
+        <div class="${cls}" onclick="selectAndOpenWk(${ix})">
+          <div class="wk-card-icon">🏋</div>
+          <div class="wk-card-body">
+            <div class="wk-card-title">${esc(wk.name)}</div>
+            <div class="wk-card-meta">${meta}</div>
+          </div>
+          <button class="wk-card-btn" onclick="event.stopPropagation();selectAndOpenWk(${ix})">${finished ? 'Ver' : (resumed ? 'Retomar' : 'Iniciar')}</button>
         </div>
-        <button class="wk-card-btn" onclick="event.stopPropagation();openWkExec()">${finished ? 'Ver' : (resumed ? 'Retomar' : 'Iniciar')}</button>
-      </div>
-    `;
+      `;
+    }).join('');
+    wkCardEl.innerHTML = cards;
   }
 
   function ensureWkState() {
@@ -1416,7 +1426,7 @@
         }
         return {
           n: ex.n, mg: ex.mg || '', sg: ex.sg || '',
-          rs: parseInt(ex.rs, 10) > 0 ? parseInt(ex.rs, 10) : 90,
+          rs: parseInt(ex.rs, 10) > 0 ? parseInt(ex.rs, 10) : 60,
           sets,
         };
       }),
@@ -1869,6 +1879,7 @@
     if (!view || !view.wk) return;
     ensureWkState();
     wkExecEl.classList.add('open');
+    document.getElementById('bottomBar')?.classList.add('hidden');
     renderWkExec();
     if (wkState && wkState.startedAt && !wkState.finishedAt) {
       // Retoma o tick
@@ -1884,6 +1895,7 @@
   };
   window.closeWkExec = function () {
     wkExecEl.classList.remove('open');
+    document.getElementById('bottomBar')?.classList.remove('hidden');
     if (wkTickInterval) { clearInterval(wkTickInterval); wkTickInterval = null; }
     wkReleaseWakeLock();
     // Não para o rest timer — pode terminar com app em segundo plano
@@ -2005,15 +2017,31 @@
     });
   }
 
-  // ─── Boot: hash > localStorage > vazio ────────────────────────
+  // ─── Boot: hash > cache de hoje > localStorage antigo > vazio ─
   (async function init() {
-    const hashMatch = (location.hash || '').match(/^#d=(.+)$/);
-    let b64 = null;
-    if (hashMatch) b64 = hashMatch[1];
-    else { try { b64 = localStorage.getItem(LAST_PAYLOAD_KEY); } catch {} }
-    if (b64) await loadPayload(b64);
-    else showEmptyState();
-    // Re-render a cada minuto pra mover a "now-line"
+    const hashPayload = extractPayload(location.hash || '');
+    if (hashPayload) {
+      await loadPayload(hashPayload);
+    } else {
+      // Fallback 1: cache da semana — se hoje está cacheado, mostra
+      const today = todayISO();
+      const cachedToday = _loadDayFromCache(today);
+      if (cachedToday) {
+        view = cachedToday;
+        loadLocalChecks(view.d);
+        loadAdhoc(view.d);
+        initDateLabel();
+        renderDayNav();
+        render();
+      } else {
+        // Fallback 2: último payload legacy
+        let b64 = null;
+        try { b64 = localStorage.getItem(LAST_PAYLOAD_KEY); } catch {}
+        if (b64) await loadPayload({ b64, kind: 'day' });
+        else showEmptyState();
+      }
+    }
+    // Re-render a cada minuto
     setInterval(() => { if (view) render(); }, 60000);
   })();
 })();
