@@ -121,6 +121,150 @@
   }
   .bottom-btn-ico { font-size: 1.4rem; line-height: 1; }
   .bottom-btn-lbl { font-size: .92rem; }
+
+  /* ─── Mercado (fullscreen overlay) ─── */
+  .mkt-overlay {
+    position: fixed; inset: 0; z-index: 150;
+    background: var(--bg); display: none; flex-direction: column;
+    overflow: hidden;
+  }
+  .mkt-overlay.open { display: flex; }
+  .mkt-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px; padding-top: calc(12px + env(safe-area-inset-top));
+    background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  .mkt-title { flex: 1; font-weight: 700; font-size: 1rem; color: var(--text); text-align: center; }
+  .mkt-head-btn {
+    background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 12px; font-size: 1rem;
+    cursor: pointer; font-family: inherit; font-weight: 700;
+  }
+  .mkt-head-btn:active { background: var(--surface3); }
+  .mkt-tabs {
+    display: flex; gap: 4px; padding: 6px 10px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  .mkt-tab {
+    flex: 1; background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 10px; font-family: inherit; font-weight: 700;
+    font-size: .82rem; cursor: pointer;
+  }
+  .mkt-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .mkt-body {
+    flex: 1; overflow-y: auto; padding: 12px;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  }
+  .mkt-actions {
+    display: flex; gap: 8px; margin-bottom: 12px;
+  }
+  .mkt-btn {
+    flex: 1; min-height: 44px;
+    background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 12px; font-family: inherit; font-weight: 700;
+    font-size: .9rem; cursor: pointer;
+  }
+  .mkt-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .mkt-btn.danger  { background: rgba(239,68,68,.12); color: #f87171; border-color: rgba(239,68,68,.35); }
+  .mkt-btn:active { transform: scale(.98); }
+  .mkt-empty {
+    padding: 30px 20px; color: var(--text3); font-style: italic; text-align: center;
+  }
+  .mkt-lists { display: flex; flex-direction: column; gap: 8px; }
+  .mkt-list-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; cursor: pointer;
+  }
+  .mkt-list-row:active { background: var(--surface2); }
+  .mkt-list-name { flex: 1; font-weight: 700; color: var(--text); font-size: .95rem; }
+  .mkt-list-meta { font-size: .74rem; color: var(--text3); font-weight: 600; }
+  .mkt-list-del {
+    background: transparent; border: 0; color: var(--text3);
+    font-size: 1rem; padding: 4px 8px; cursor: pointer;
+  }
+  .mkt-list-del:active { color: #f87171; }
+
+  /* Detalhe da lista + catálogo */
+  .mkt-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 6px;
+  }
+  .mkt-item.done { opacity: .5; }
+  .mkt-item.done .mkt-item-name { text-decoration: line-through; }
+  .mkt-item-check {
+    flex: 0 0 auto; width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--border2); border-radius: 6px;
+    color: transparent; cursor: pointer; font-weight: 800;
+  }
+  .mkt-item.done .mkt-item-check {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+  }
+  .mkt-item-name { flex: 1; font-weight: 600; color: var(--text); font-size: .92rem; }
+  .mkt-item-qty {
+    display: flex; align-items: center; gap: 4px;
+    font-size: .78rem; font-weight: 700; color: var(--text2);
+    background: var(--surface2); padding: 3px 8px; border-radius: 6px;
+  }
+  .mkt-item-qty input {
+    width: 44px; padding: 2px 4px; background: transparent; border: 0;
+    color: var(--text); font-family: inherit; font-weight: 700; font-size: .82rem;
+    text-align: right;
+  }
+  .mkt-item-unit {
+    font-size: .74rem; color: var(--text3); font-weight: 600;
+  }
+  .mkt-item-del {
+    background: transparent; border: 0; color: var(--text3);
+    font-size: 1rem; padding: 4px 6px; cursor: pointer;
+  }
+  .mkt-item-del:active { color: #f87171; }
+  .mkt-item-price {
+    background: var(--accent); color: #fff; border: 0;
+    padding: 3px 8px; border-radius: 6px; font-family: inherit;
+    font-size: .74rem; font-weight: 800; cursor: pointer;
+  }
+  .mkt-item-price.add {
+    background: transparent; color: var(--accent);
+    border: 1px dashed var(--border2); font-weight: 700;
+  }
+  .mkt-item-price:active { transform: scale(.95); }
+
+  /* Barra de adição de item */
+  .mkt-add-bar {
+    display: flex; gap: 6px; align-items: center; margin-bottom: 12px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 6px;
+  }
+  .mkt-add-input {
+    flex: 1; padding: 8px 10px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: inherit; font-size: .9rem;
+    min-width: 0;
+  }
+  .mkt-add-input:focus { outline: none; border-color: var(--accent); }
+  .mkt-add-unit {
+    width: 68px; padding: 8px 6px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: inherit; font-size: .82rem;
+  }
+  .mkt-add-btn {
+    background: var(--accent); color: #fff; border: 0;
+    padding: 8px 14px; border-radius: 8px; font-family: inherit; font-weight: 800;
+    font-size: 1rem; cursor: pointer;
+  }
+  .mkt-add-btn:active { transform: scale(.94); }
+
+  /* Sugestões abaixo do input (do catálogo) */
+  .mkt-suggestions {
+    display: flex; flex-wrap: wrap; gap: 4px; margin: -6px 0 12px;
+  }
+  .mkt-suggest-chip {
+    background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 10px; font-size: .76rem; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+  }
+  .mkt-suggest-chip:active { background: var(--surface3); }
   .empty {
     text-align: center; color: var(--text3); padding: 60px 20px;
     font-size: .9rem;
@@ -247,6 +391,70 @@
     cursor: pointer; font-family: inherit;
   }
   .adhoc-quick button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* Editor de subitens no sheet Nova/Editar tarefa */
+  .adhoc-sub-list {
+    display: flex; flex-direction: column; gap: 4px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 8px; min-height: 40px;
+    margin-bottom: 4px;
+  }
+  .adhoc-sub-empty {
+    color: var(--text3); font-size: .74rem; font-style: italic;
+    text-align: center; padding: 6px 0;
+  }
+  .adhoc-sub-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 6px; background: var(--surface2); border-radius: 6px;
+  }
+  .adhoc-sub-item.done .adhoc-sub-text { text-decoration: line-through; opacity: .55; }
+  .adhoc-sub-check {
+    flex: 0 0 auto; width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--border2); border-radius: 5px; background: transparent;
+    color: transparent; cursor: pointer; font-weight: 800; font-size: .82rem;
+    font-family: inherit;
+  }
+  .adhoc-sub-item.done .adhoc-sub-check {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+  }
+  .adhoc-sub-text { flex: 1; font-size: .84rem; color: var(--text); font-weight: 600; }
+  .adhoc-sub-rm {
+    background: transparent; border: 0; color: var(--text3); font-size: .95rem;
+    padding: 2px 6px; cursor: pointer; font-family: inherit;
+  }
+  .adhoc-sub-rm:active { color: #f87171; }
+  .adhoc-sub-add { display: flex; gap: 6px; margin-bottom: 6px; }
+  .adhoc-sub-add .field-input { flex: 1; }
+  .adhoc-sub-add-btn {
+    background: var(--accent); color: #fff; border: 0;
+    padding: 0 16px; border-radius: 8px; font-family: inherit; font-weight: 800;
+    font-size: 1.1rem; cursor: pointer; min-width: 46px;
+  }
+  .adhoc-sub-add-btn:active { transform: scale(.94); }
+
+  /* Subitens inline dentro do item de tarefa (na linha do tempo) */
+  .adhoc-sub-inline {
+    display: flex; flex-direction: column; gap: 3px;
+    margin: 2px 0 6px 32px;
+  }
+  .adhoc-sub-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 10px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; cursor: pointer; font-size: .82rem;
+  }
+  .adhoc-sub-row.done { opacity: .55; }
+  .adhoc-sub-row.done .adhoc-sub-row-text { text-decoration: line-through; }
+  .adhoc-sub-row-check {
+    flex: 0 0 auto; width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--border2); border-radius: 4px; background: transparent;
+    color: transparent; font-weight: 800; font-size: .74rem;
+  }
+  .adhoc-sub-row.done .adhoc-sub-row-check {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+  }
+  .adhoc-sub-row-text { flex: 1; color: var(--text); font-weight: 500; }
 
   /* ─── Banner de instalação PWA ─── */
   .install-banner {
@@ -533,6 +741,51 @@
     padding: 7px 12px; border-radius: 8px; font-size: .9rem;
     cursor: pointer; font-family: inherit;
   }
+  /* Modos do overlay de sincronização */
+  .scan-mode { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .scan-mode[hidden] { display: none; }
+  .scan-mode-paste {
+    padding: 24px 20px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    align-items: center; justify-content: center; gap: 16px;
+    background: linear-gradient(180deg, #0d0d14 0%, #050508 100%);
+  }
+  .scan-paste-panel {
+    width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 10px;
+    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1);
+    border-radius: 14px; padding: 20px;
+  }
+  .scan-paste-title {
+    font-size: 1.05rem; font-weight: 800; color: #fff; text-align: center;
+  }
+  .scan-paste-hint {
+    color: rgba(255,255,255,.55); font-size: .78rem; text-align: center; margin-bottom: 4px;
+  }
+  #scanPaste {
+    width: 100%; box-sizing: border-box;
+    padding: 14px; background: rgba(0,0,0,.4); color: #fff;
+    border: 1px solid rgba(255,255,255,.15); border-radius: 10px;
+    font-family: monospace; font-size: .82rem; line-height: 1.4;
+    resize: vertical; min-height: 180px; outline: none;
+  }
+  #scanPaste:focus { border-color: var(--accent); }
+  .scan-load-btn {
+    padding: 14px 20px; background: var(--accent); color: #fff;
+    border: 0; border-radius: 10px;
+    font-family: inherit; font-size: 1rem; font-weight: 800;
+    cursor: pointer; letter-spacing: .02em;
+  }
+  .scan-load-btn:active { transform: scale(.98); }
+  .scan-alt-btn {
+    padding: 10px 16px;
+    background: transparent; color: rgba(255,255,255,.6);
+    border: 1px solid rgba(255,255,255,.18); border-radius: 999px;
+    font-family: inherit; font-size: .8rem; font-weight: 700;
+    cursor: pointer;
+  }
+  .scan-alt-btn:active { background: rgba(255,255,255,.08); }
+  .scan-alt-btn.small { padding: 6px 12px; font-size: .74rem; margin-top: 10px; }
+
   .scan-video-wrap {
     flex: 1; min-height: 0; position: relative;
     display: flex; align-items: center; justify-content: center;
@@ -605,6 +858,10 @@
 
 <!-- Barra inferior fixa — QR scanner + adicionar tarefa. Some quando o treino está aberto. -->
 <nav id="bottomBar" class="bottom-bar">
+  <button class="bottom-btn" onclick="openMkt()" title="Mercado: listas de compras e catálogo de itens">
+    <span class="bottom-btn-ico">🛒</span>
+    <span class="bottom-btn-lbl">Mercado</span>
+  </button>
   <button class="bottom-btn primary" onclick="openScanner()" title="Escanear QR Code do desktop">
     <span class="bottom-btn-ico">📷</span>
     <span class="bottom-btn-lbl">Escanear QR</span>
@@ -614,6 +871,20 @@
     <span class="bottom-btn-lbl">Nova tarefa</span>
   </button>
 </nav>
+
+<!-- Overlay fullscreen do Mercado (listas + catálogo + finalizar compra) -->
+<div class="mkt-overlay" id="mktOverlay">
+  <div class="mkt-head">
+    <button class="mkt-head-btn" onclick="mktBack()" id="mktBackBtn" title="Voltar">←</button>
+    <div class="mkt-title" id="mktTitle">🛒 Mercado</div>
+    <button class="mkt-head-btn" onclick="closeMkt()" title="Fechar">✕</button>
+  </div>
+  <div class="mkt-tabs" id="mktTabs">
+    <button class="mkt-tab active" data-tab="lists" onclick="mktSetTab('lists')">📋 Listas</button>
+    <button class="mkt-tab" data-tab="items" onclick="mktSetTab('items')">🥕 Itens</button>
+  </div>
+  <div class="mkt-body" id="mktBody"></div>
+</div>
 
 <!-- Banner de instalação PWA -->
 <div class="install-banner" id="installBanner">
@@ -653,6 +924,13 @@
     <div class="info">Cadastra uma tarefa pra fazer — marque como feita depois no ✓. Vai pro export junto com os checks.</div>
     <label class="field-label">O que precisa fazer</label>
     <input type="text" id="adhocText" class="field-input" placeholder="Ex: Ligar pro cliente, organizar documentos…" maxlength="120">
+    <label class="field-label">Subitens <span style="opacity:.55;font-size:.72rem;font-weight:500">— opcional, marcados individualmente</span></label>
+    <div class="adhoc-sub-list" id="adhocSubList"></div>
+    <div class="adhoc-sub-add">
+      <input type="text" id="adhocSubInput" class="field-input" placeholder="+ novo subitem" maxlength="120"
+             onkeydown="if(event.key==='Enter'){event.preventDefault();adhocAddSub();}">
+      <button type="button" class="adhoc-sub-add-btn" onclick="adhocAddSub()">＋</button>
+    </div>
     <label class="field-label">Pontuação</label>
     <input type="number" id="adhocScore" class="field-input" inputmode="numeric" min="0" step="10" value="50">
     <div class="adhoc-quick">
@@ -704,20 +982,32 @@
 
 <div class="scan-overlay" id="scanOverlay">
   <div class="scan-head">
-    <span>📷 Escanear QR</span>
+    <span id="scanHeadTitle">📋 Sincronizar do desktop</span>
     <button class="scan-close" onclick="closeScanner()">Fechar ✕</button>
   </div>
-  <div class="scan-video-wrap" id="scanVideoWrap">
-    <video id="scanVideo" playsinline muted autoplay></video>
-    <div class="scan-frame"></div>
+
+  <!-- Modo padrão: colar texto -->
+  <div class="scan-mode scan-mode-paste" id="scanModePaste">
+    <div class="scan-paste-panel">
+      <div class="scan-paste-title">Cole o texto exportado</div>
+      <div class="scan-paste-hint">Copie a URL/texto que o desktop gerou e cole aqui.</div>
+      <textarea id="scanPaste" rows="8" placeholder="Cole aqui…"></textarea>
+      <button class="scan-load-btn" onclick="acceptPastedUrl()">✓ Carregar</button>
+    </div>
+    <button class="scan-alt-btn" onclick="scanSetMode('camera')">📷 Preferir usar câmera / QR Code</button>
   </div>
-  <div class="scan-hint">
-    <div id="scanStatus">Aponte a câmera pro QR Code do desktop…</div>
-    <input type="file" id="scanPhoto" accept="image/*" capture="environment" style="display:none" onchange="onPhotoSelected(this)">
-    <button class="scan-photo-btn" type="button" onclick="document.getElementById('scanPhoto').click()">📁 Tirar foto do QR</button>
-    <div class="scan-paste-row">
-      <input type="text" id="scanPaste" placeholder="ou cole a URL aqui">
-      <button onclick="acceptPastedUrl()">Carregar</button>
+
+  <!-- Modo alternativo: câmera -->
+  <div class="scan-mode scan-mode-camera" id="scanModeCamera" hidden>
+    <div class="scan-video-wrap" id="scanVideoWrap">
+      <video id="scanVideo" playsinline muted autoplay></video>
+      <div class="scan-frame"></div>
+    </div>
+    <div class="scan-hint">
+      <div id="scanStatus">Aponte a câmera pro QR Code do desktop…</div>
+      <input type="file" id="scanPhoto" accept="image/*" capture="environment" style="display:none" onchange="onPhotoSelected(this)">
+      <button class="scan-photo-btn" type="button" onclick="document.getElementById('scanPhoto').click()">📁 Tirar foto do QR</button>
+      <button class="scan-alt-btn small" onclick="scanSetMode('paste')">← Voltar pra colar texto</button>
     </div>
   </div>
 </div>
@@ -966,14 +1256,27 @@
         const isTaskDone = at.done === true || (at.done === undefined && !!at.doneAt);
         if (isTaskDone) { doneCount++; if (at.score) scoreTotal += Number(at.score) || 0; }
         const sc = at.score ? ' +' + at.score + 'pts' : '';
-        const meta = isTaskDone && at.doneAt ? ' ✓ ' + String(at.doneAt).slice(11,16) : '';
-        return '<div class="item ' + (isTaskDone?'done':'') + '" data-t="adhoc" data-aid="' + esc(at.id) + '" onclick="toggleAdhoc(\'' + esc(at.id) + '\')">' +
+        const subs = Array.isArray(at.subitems) ? at.subitems : [];
+        const subDone = subs.filter(s => s.done).length;
+        const subMeta = subs.length ? ' 📎' + subDone + '/' + subs.length : '';
+        const meta = (isTaskDone && at.doneAt ? ' ✓ ' + String(at.doneAt).slice(11,16) : '') + subMeta;
+        let row = '<div class="item ' + (isTaskDone?'done':'') + '" data-t="adhoc" data-aid="' + esc(at.id) + '" onclick="toggleAdhoc(\'' + esc(at.id) + '\')">' +
           '<span class="item-check">✓</span>' +
           '<span class="item-icon">➕</span>' +
           '<span class="item-name">' + esc(at.text) + '</span>' +
           '<span class="item-meta">' + esc(meta + sc) + '</span>' +
+          '<button class="slot-collapse" style="margin:0 0 0 4px" onclick="event.stopPropagation();editAdhoc(\'' + esc(at.id) + '\')" title="Editar">✎</button>' +
           '<button class="slot-collapse" style="margin:0 0 0 4px" onclick="event.stopPropagation();removeAdhoc(\'' + esc(at.id) + '\')" title="Remover">✕</button>' +
         '</div>';
+        if (subs.length) {
+          row += '<div class="adhoc-sub-inline">' + subs.map(s =>
+            '<div class="adhoc-sub-row' + (s.done ? ' done' : '') + '" onclick="toggleAdhocSub(\'' + esc(at.id) + '\',\'' + esc(s.id) + '\')">' +
+              '<span class="adhoc-sub-row-check">' + (s.done ? '✓' : '') + '</span>' +
+              '<span class="adhoc-sub-row-text">' + esc(s.text) + '</span>' +
+            '</div>'
+          ).join('') + '</div>';
+        }
+        return row;
       }).join('');
       html += '<div class="wd-block"><div class="wd-block-head" style="cursor:default">' +
         '<span>➕ Tarefas do celular</span>' +
@@ -1003,17 +1306,79 @@
   }
 
   // ─── Ad-hoc handlers ────────────────────────────────────────────
-  window.openAdhocSheet = function () {
+  // Buffer de subitens usado APENAS enquanto o sheet está aberto.
+  // Guardamos { id, text, done } — id ajuda a manter estabilidade nos toggles
+  // durante edição de tarefa existente.
+  let _adhocEditingId = null;
+  let _adhocSubBuffer = [];
+  function _adhocSubUuid() {
+    return 'as_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  }
+  function _adhocRenderSubList() {
+    const el = document.getElementById('adhocSubList');
+    if (!el) return;
+    if (_adhocSubBuffer.length === 0) {
+      el.innerHTML = '<div class="adhoc-sub-empty">Nenhum subitem</div>';
+      return;
+    }
+    el.innerHTML = _adhocSubBuffer.map(s => {
+      return '<div class="adhoc-sub-item' + (s.done ? ' done' : '') + '">' +
+        '<button type="button" class="adhoc-sub-check" onclick="adhocToggleSubInBuffer(\'' + esc(s.id) + '\')" title="' + (s.done ? 'Desmarcar' : 'Marcar') + '">' + (s.done ? '✓' : '') + '</button>' +
+        '<span class="adhoc-sub-text">' + esc(s.text) + '</span>' +
+        '<button type="button" class="adhoc-sub-rm" onclick="adhocRemoveSubFromBuffer(\'' + esc(s.id) + '\')" title="Remover">✕</button>' +
+      '</div>';
+    }).join('');
+  }
+  window.adhocAddSub = function () {
+    const inp = document.getElementById('adhocSubInput');
+    const text = (inp?.value || '').trim();
+    if (!text) return;
+    _adhocSubBuffer.push({ id: _adhocSubUuid(), text, done: false });
+    if (inp) { inp.value = ''; setTimeout(() => inp.focus(), 20); }
+    _adhocRenderSubList();
+  };
+  window.adhocRemoveSubFromBuffer = function (id) {
+    _adhocSubBuffer = _adhocSubBuffer.filter(s => s.id !== id);
+    _adhocRenderSubList();
+  };
+  window.adhocToggleSubInBuffer = function (id) {
+    const s = _adhocSubBuffer.find(x => x.id === id);
+    if (!s) return;
+    s.done = !s.done;
+    _adhocRenderSubList();
+  };
+
+  window.openAdhocSheet = function (editId) {
     const date = view ? view.d : new Date().toISOString().slice(0,10);
     loadAdhoc(date);
-    document.getElementById('adhocText').value = '';
-    document.getElementById('adhocScore').value = '50';
-    adhocSetScore(50);
+    _adhocEditingId = editId || null;
+    _adhocSubBuffer = [];
+    const titleEl = document.getElementById('adhocSheetTitle');
+    if (_adhocEditingId) {
+      const at = adhocTasks.find(a => a.id === _adhocEditingId);
+      if (!at) { _adhocEditingId = null; return; }
+      if (titleEl) titleEl.textContent = '✎ Editar tarefa';
+      document.getElementById('adhocText').value = at.text || '';
+      document.getElementById('adhocScore').value = String(at.score ?? 50);
+      adhocSetScore(Number(at.score) || 0);
+      _adhocSubBuffer = (Array.isArray(at.subitems) ? at.subitems : [])
+        .map(s => ({ id: s.id || _adhocSubUuid(), text: s.text || '', done: !!s.done }));
+    } else {
+      if (titleEl) titleEl.textContent = '➕ Nova tarefa';
+      document.getElementById('adhocText').value = '';
+      document.getElementById('adhocScore').value = '50';
+      adhocSetScore(50);
+    }
+    const subInp = document.getElementById('adhocSubInput');
+    if (subInp) subInp.value = '';
+    _adhocRenderSubList();
     document.getElementById('adhocSheet').classList.add('open');
     setTimeout(() => document.getElementById('adhocText').focus(), 100);
   };
   window.closeAdhocSheet = function () {
     document.getElementById('adhocSheet').classList.remove('open');
+    _adhocEditingId = null;
+    _adhocSubBuffer = [];
   };
   window.adhocSetScore = function (n) {
     document.getElementById('adhocScore').value = String(n);
@@ -1027,12 +1392,44 @@
     if (!text) { toast('⚠️ Escreva o que precisa fazer'); return; }
     const date = view ? view.d : new Date().toISOString().slice(0,10);
     loadAdhoc(date);
+    const subitems = _adhocSubBuffer.map(s => ({ id: s.id, text: s.text, done: !!s.done }));
+    if (_adhocEditingId) {
+      const at = adhocTasks.find(a => a.id === _adhocEditingId);
+      if (at) {
+        at.text = text;
+        at.score = score;
+        at.subitems = subitems.length ? subitems : undefined;
+        if (!subitems.length) delete at.subitems;
+      }
+      saveAdhocList(date);
+      closeAdhocSheet();
+      toast('✓ Tarefa atualizada');
+      render();
+      return;
+    }
     const id = 'a_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
     // Nova tarefa nasce PENDENTE. Marca como feita depois via toggle.
-    adhocTasks.push({ id, text, score, done: false, createdAt: new Date().toISOString() });
+    const task = { id, text, score, done: false, createdAt: new Date().toISOString() };
+    if (subitems.length) task.subitems = subitems;
+    adhocTasks.push(task);
     saveAdhocList(date);
     closeAdhocSheet();
     toast('✓ Tarefa adicionada');
+    render();
+  };
+  window.editAdhoc = function (id) {
+    openAdhocSheet(id);
+  };
+  window.toggleAdhocSub = function (taskId, subId) {
+    if (!view) return;
+    const at = adhocTasks.find(a => a.id === taskId);
+    if (!at || !Array.isArray(at.subitems)) return;
+    const s = at.subitems.find(x => x.id === subId);
+    if (!s) return;
+    s.done = !s.done;
+    if (s.done) s.doneAt = new Date().toISOString();
+    else delete s.doneAt;
+    saveAdhocList(view.d);
     render();
   };
   window.toggleAdhoc = function (id) {
@@ -1139,14 +1536,36 @@
     return '⚠️ Câmera indisponível: ' + esc(msg) + '<br>Use "📁 Tirar foto do QR" abaixo.';
   }
 
-  window.openScanner = async function () {
+  // Fluxo padrão: abre em modo "colar texto". Câmera só liga se o usuário optar.
+  window.openScanner = function () {
     const overlay = document.getElementById('scanOverlay');
-    const video = document.getElementById('scanVideo');
-    const status = document.getElementById('scanStatus');
-    const pasteInp = document.getElementById('scanPaste');
     overlay.classList.add('open');
-    pasteInp.value = '';
+    scanSetMode('paste');
+  };
 
+  // Alterna entre os modos "paste" e "camera". Liga/desliga câmera conforme.
+  window.scanSetMode = async function (mode) {
+    const paste = document.getElementById('scanModePaste');
+    const cam   = document.getElementById('scanModeCamera');
+    const head  = document.getElementById('scanHeadTitle');
+    if (mode === 'camera') {
+      if (paste) paste.hidden = true;
+      if (cam)   cam.hidden = false;
+      if (head)  head.textContent = '📷 Escanear QR do desktop';
+      await _startCamera();
+    } else {
+      _stopCamera();
+      if (cam)   cam.hidden = true;
+      if (paste) paste.hidden = false;
+      if (head)  head.textContent = '📋 Sincronizar do desktop';
+      const ta = document.getElementById('scanPaste');
+      if (ta) setTimeout(() => { try { ta.focus(); } catch {} }, 60);
+    }
+  };
+
+  async function _startCamera() {
+    const video  = document.getElementById('scanVideo');
+    const status = document.getElementById('scanStatus');
     if (!('BarcodeDetector' in window)) {
       status.innerHTML = '⚠️ Este navegador não suporta scanner nativo (BarcodeDetector).<br>Use "📁 Tirar foto do QR" — não vai funcionar a decodificação aqui.<br>Cole a URL manualmente.';
       return;
@@ -1162,7 +1581,6 @@
       status.innerHTML = '⚠️ Falha ao inicializar scanner: ' + esc(String(e.message || e));
       return;
     }
-    // Câmera ao vivo precisa de HTTPS/localhost — file:// e http:// não tem acesso a mediaDevices.
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       status.innerHTML = _diagnoseCameraIssue(null);
       return;
@@ -1179,7 +1597,16 @@
     } catch (e) {
       status.innerHTML = _diagnoseCameraIssue(e);
     }
-  };
+  }
+  function _stopCamera() {
+    if (_scanRaf) { cancelAnimationFrame(_scanRaf); _scanRaf = null; }
+    if (_scanStream) {
+      for (const tr of _scanStream.getTracks()) try { tr.stop(); } catch {}
+      _scanStream = null;
+    }
+    const video = document.getElementById('scanVideo');
+    if (video) { try { video.srcObject = null; } catch {} }
+  }
 
   // Decodifica QR a partir de uma foto tirada via file input (funciona em file://)
   window.onPhotoSelected = async function (input) {
@@ -1246,15 +1673,9 @@
     _scanRaf = requestAnimationFrame(_scanLoop);
   }
 
-  window.closeScanner = async function () {
+  window.closeScanner = function () {
     document.getElementById('scanOverlay').classList.remove('open');
-    if (_scanRaf) { cancelAnimationFrame(_scanRaf); _scanRaf = null; }
-    if (_scanStream) {
-      for (const tr of _scanStream.getTracks()) try { tr.stop(); } catch {}
-      _scanStream = null;
-    }
-    const video = document.getElementById('scanVideo');
-    if (video) { try { video.srcObject = null; } catch {} }
+    _stopCamera();
   };
 
   window.acceptPastedUrl = async function () {
@@ -2001,6 +2422,491 @@
       navigator.serviceWorker.register('sw.js').catch(() => { /* ignora */ });
     });
   }
+
+  // ═══════════════════════════════════════════════════════════════
+  // ─── 🛒 Mercado — catálogo + listas de compras (v1: nome/qty/unid) ─
+  // ═══════════════════════════════════════════════════════════════
+  const MKT_CATALOG_KEY  = 'mobileMarketCatalog';
+  const MKT_LISTS_KEY    = 'mobileMarketLists';
+  const MKT_ARCHIVES_KEY = 'mobileMarketArchives';
+  const MKT_UNITS = ['unid', 'kg', 'g', 'L', 'ml', 'pacote', 'caixa', 'lata'];
+  let mktCatalog  = [];  // [{ id, name, unitDefault, createdAt }]
+  let mktLists    = [];  // [{ id, name, items: [{ id, itemId?, name, qty, unit, done, price? }], createdAt, mercado? }]
+  let mktArchives = [];  // [{ id, listId?, listName, finishedAt, mercado?, items: [...], exportedAt? }] — snapshot pra export desktop
+  let _mktCurrentListId = null;
+  let _mktTab = 'lists';
+
+  function _mktLoad() {
+    try { mktCatalog  = JSON.parse(localStorage.getItem(MKT_CATALOG_KEY)  || '[]'); } catch { mktCatalog  = []; }
+    try { mktLists    = JSON.parse(localStorage.getItem(MKT_LISTS_KEY)    || '[]'); } catch { mktLists    = []; }
+    try { mktArchives = JSON.parse(localStorage.getItem(MKT_ARCHIVES_KEY) || '[]'); } catch { mktArchives = []; }
+    if (!Array.isArray(mktCatalog))  mktCatalog  = [];
+    if (!Array.isArray(mktLists))    mktLists    = [];
+    if (!Array.isArray(mktArchives)) mktArchives = [];
+  }
+  function _mktSave() {
+    try { localStorage.setItem(MKT_CATALOG_KEY,  JSON.stringify(mktCatalog));  } catch {}
+    try { localStorage.setItem(MKT_LISTS_KEY,    JSON.stringify(mktLists));    } catch {}
+    try { localStorage.setItem(MKT_ARCHIVES_KEY, JSON.stringify(mktArchives)); } catch {}
+  }
+  function _mktUuid(prefix) {
+    return (prefix || 'x_') + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+  function _mktFindItem(name) {
+    const q = String(name || '').trim().toLowerCase();
+    if (!q) return null;
+    return mktCatalog.find(i => (i.name || '').toLowerCase() === q) || null;
+  }
+  function _mktAddToCatalog(name, unit) {
+    const clean = String(name || '').trim();
+    if (!clean) return null;
+    const existing = _mktFindItem(clean);
+    if (existing) return existing;
+    const item = { id: _mktUuid('mi_'), name: clean, unitDefault: unit || 'unid', createdAt: new Date().toISOString() };
+    mktCatalog.push(item);
+    return item;
+  }
+
+  window.openMkt = function() {
+    _mktLoad();
+    _mktCurrentListId = null;
+    _mktTab = 'lists';
+    document.getElementById('mktOverlay').classList.add('open');
+    document.getElementById('bottomBar')?.classList.add('hidden');
+    mktRender();
+  };
+  window.closeMkt = function() {
+    document.getElementById('mktOverlay').classList.remove('open');
+    document.getElementById('bottomBar')?.classList.remove('hidden');
+    _mktCurrentListId = null;
+  };
+  window.mktBack = function() {
+    if (_mktCurrentListId) { _mktCurrentListId = null; mktRender(); }
+    else closeMkt();
+  };
+  window.mktSetTab = function(tab) {
+    if (!['lists','items'].includes(tab)) return;
+    _mktTab = tab;
+    _mktCurrentListId = null;
+    mktRender();
+  };
+
+  function _mktSyncTabs() {
+    document.querySelectorAll('.mkt-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.tab === _mktTab);
+    });
+    // Esconde tabs quando dentro do detalhe de uma lista
+    document.getElementById('mktTabs').style.display = _mktCurrentListId ? 'none' : '';
+  }
+  function _mktSyncTitle() {
+    const el = document.getElementById('mktTitle');
+    if (!el) return;
+    if (_mktCurrentListId) {
+      const l = mktLists.find(x => x.id === _mktCurrentListId);
+      el.textContent = l ? l.name : '🛒 Mercado';
+    } else {
+      el.textContent = '🛒 Mercado';
+    }
+  }
+
+  window.mktRender = function() {
+    _mktSyncTabs();
+    _mktSyncTitle();
+    const body = document.getElementById('mktBody');
+    if (!body) return;
+    if (_mktCurrentListId) {
+      body.innerHTML = _mktRenderListDetail();
+      _mktBindListDetailHandlers();
+      return;
+    }
+    if (_mktTab === 'lists') {
+      body.innerHTML = _mktRenderListsView();
+    } else {
+      body.innerHTML = _mktRenderCatalogView();
+      _mktBindCatalogHandlers();
+    }
+  };
+
+  function _mktRenderListsView() {
+    const sorted = mktLists.slice().sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    if (sorted.length === 0) {
+      const pendingExport = mktArchives.filter(a => !a.exportedAt).length;
+    const exportBtn = pendingExport > 0
+      ? `<button class="mkt-btn" onclick="mktExportOpen()" title="Exportar compras pro desktop">📤 Exportar (${pendingExport})</button>`
+      : '';
+    return `<div class="mkt-actions"><button class="mkt-btn primary" onclick="mktNewList()">➕ Nova lista</button>${exportBtn}</div>
+        <div class="mkt-empty">Nenhuma lista ainda.<br><br>Cria uma pra montar as compras.</div>`;
+    }
+    const rows = sorted.map(l => {
+      const total = l.items.length;
+      const done = l.items.filter(i => i.done).length;
+      return `<div class="mkt-list-row" onclick="mktOpenList('${l.id}')">
+        <div style="flex:1;min-width:0">
+          <div class="mkt-list-name">${esc(l.name)}</div>
+          <div class="mkt-list-meta">${done}/${total} ${total === 1 ? 'item' : 'itens'}</div>
+        </div>
+        <button class="mkt-list-del" onclick="event.stopPropagation();mktDelList('${l.id}')" title="Excluir">🗑</button>
+      </div>`;
+    }).join('');
+    const pendingExport = mktArchives.filter(a => !a.exportedAt).length;
+    const exportBtn = pendingExport > 0
+      ? `<button class="mkt-btn" onclick="mktExportOpen()" title="Exportar compras pro desktop">📤 Exportar (${pendingExport})</button>`
+      : '';
+    return `<div class="mkt-actions"><button class="mkt-btn primary" onclick="mktNewList()">➕ Nova lista</button>${exportBtn}</div>
+      <div class="mkt-lists">${rows}</div>`;
+  }
+
+  window.mktNewList = function() {
+    const name = prompt('Nome da lista (ex: Semana, Churrasco…):', '');
+    if (!name || !name.trim()) return;
+    const list = {
+      id: _mktUuid('ml_'),
+      name: name.trim(),
+      items: [],
+      createdAt: new Date().toISOString(),
+    };
+    mktLists.push(list);
+    _mktSave();
+    _mktCurrentListId = list.id;
+    mktRender();
+  };
+  window.mktOpenList = function(id) {
+    _mktCurrentListId = id;
+    mktRender();
+  };
+  window.mktDelList = function(id) {
+    const l = mktLists.find(x => x.id === id);
+    if (!l) return;
+    if (!confirm(`Excluir a lista "${l.name}"?`)) return;
+    mktLists = mktLists.filter(x => x.id !== id);
+    _mktSave();
+    mktRender();
+  };
+
+  function _mktRenderListDetail() {
+    const l = mktLists.find(x => x.id === _mktCurrentListId);
+    if (!l) { _mktCurrentListId = null; return _mktRenderListsView(); }
+    const doneCount = l.items.filter(i => i.done).length;
+    // Ordena: pendentes primeiro, feitos no fim
+    const pending = l.items.filter(i => !i.done);
+    const done    = l.items.filter(i => i.done);
+    const renderRow = (it) => {
+      const priceChip = (typeof it.price === 'number')
+        ? `<button class="mkt-item-price" onclick="mktSetPrice('${it.id}')" title="Editar preço">R$ ${it.price.toFixed(2).replace('.', ',')}</button>`
+        : (it.done ? `<button class="mkt-item-price add" onclick="mktSetPrice('${it.id}')" title="Adicionar preço">+ R$</button>` : '');
+      return `<div class="mkt-item${it.done ? ' done' : ''}" data-item-id="${it.id}">
+        <button class="mkt-item-check" onclick="mktToggleItem('${it.id}')" title="${it.done ? 'Desmarcar' : 'Marcar como pego'}">✓</button>
+        <div class="mkt-item-name">${esc(it.name)}</div>
+        ${priceChip}
+        <label class="mkt-item-qty">
+          <input type="number" min="0" step="0.5" value="${it.qty}"
+                 onchange="mktEditQty('${it.id}', this.value)"
+                 onclick="event.stopPropagation()">
+          <span class="mkt-item-unit">${esc(it.unit || 'unid')}</span>
+        </label>
+        <button class="mkt-item-del" onclick="mktDelItem('${it.id}')" title="Remover">✕</button>
+      </div>`;
+    };
+    // Sugestões do catálogo — tudo que não tá na lista ainda
+    const inList = new Set(l.items.map(i => (i.itemId || '').toString()));
+    const suggestions = mktCatalog
+      .filter(ci => !inList.has(ci.id))
+      .slice(0, 12)
+      .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt'));
+    const suggestHtml = suggestions.length ? `<div class="mkt-suggestions">
+      ${suggestions.map(ci => `<button class="mkt-suggest-chip" onclick="mktAddFromCatalog('${ci.id}')">＋ ${esc(ci.name)}</button>`).join('')}
+    </div>` : '';
+    const finishBtn = doneCount > 0
+      ? `<button class="mkt-btn" onclick="mktFinishShopping()">✅ Finalizar compra (${doneCount})</button>`
+      : '';
+    const emptyMsg = l.items.length === 0
+      ? '<div class="mkt-empty">Lista vazia. Adicione itens acima.</div>'
+      : '';
+    return `<div class="mkt-add-bar">
+        <input type="text" id="mktAddInput" class="mkt-add-input" placeholder="Item (busca ou cria novo)"
+               oninput="_mktSuggest()" onkeydown="if(event.key==='Enter'){event.preventDefault();mktAddInputSubmit();}">
+        <select class="mkt-add-unit" id="mktAddUnit">
+          ${MKT_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}
+        </select>
+        <button class="mkt-add-btn" onclick="mktAddInputSubmit()">＋</button>
+      </div>
+      ${suggestHtml}
+      ${emptyMsg}
+      ${pending.map(renderRow).join('')}
+      ${done.length ? `<div style="margin:16px 0 6px 4px;color:var(--text3);font-size:.72rem;font-weight:700">✓ NO CARRINHO</div>` : ''}
+      ${done.map(renderRow).join('')}
+      <div style="margin-top:20px;display:flex;gap:8px">
+        ${finishBtn}
+        <button class="mkt-btn danger" onclick="mktClearDone()" style="flex:0 0 auto">🗑 Limpar feitos</button>
+      </div>`;
+  }
+
+  function _mktBindListDetailHandlers() {
+    // Nada extra hoje — tudo é onclick inline. Placeholder pra futuro.
+  }
+
+  window._mktSuggest = function() {
+    // Filtra os chips por match de nome enquanto o usuário digita
+    const q = (document.getElementById('mktAddInput')?.value || '').trim().toLowerCase();
+    document.querySelectorAll('.mkt-suggest-chip').forEach(c => {
+      const name = c.textContent.replace(/^＋\s*/, '').toLowerCase();
+      c.style.display = (!q || name.includes(q)) ? '' : 'none';
+    });
+  };
+
+  window.mktAddInputSubmit = function() {
+    const inp = document.getElementById('mktAddInput');
+    const unitSel = document.getElementById('mktAddUnit');
+    const name = (inp?.value || '').trim();
+    if (!name) return;
+    const unit = unitSel?.value || 'unid';
+    const l = mktLists.find(x => x.id === _mktCurrentListId);
+    if (!l) return;
+    // Se existe no catálogo, usa o itemId. Senão, cria e adiciona.
+    let cat = _mktFindItem(name);
+    if (!cat) cat = _mktAddToCatalog(name, unit);
+    l.items.push({
+      id: _mktUuid('li_'),
+      itemId: cat.id,
+      name: cat.name,
+      qty: 1,
+      unit: unit || cat.unitDefault || 'unid',
+      done: false,
+    });
+    _mktSave();
+    if (inp) inp.value = '';
+    mktRender();
+    setTimeout(() => document.getElementById('mktAddInput')?.focus(), 30);
+  };
+  window.mktAddFromCatalog = function(itemId) {
+    const cat = mktCatalog.find(x => x.id === itemId);
+    if (!cat) return;
+    const l = mktLists.find(x => x.id === _mktCurrentListId);
+    if (!l) return;
+    l.items.push({
+      id: _mktUuid('li_'),
+      itemId: cat.id,
+      name: cat.name,
+      qty: 1,
+      unit: cat.unitDefault || 'unid',
+      done: false,
+    });
+    _mktSave();
+    mktRender();
+  };
+  window.mktToggleItem = function(itemId) {
+    const l = mktLists.find(x => x.id === _mktCurrentListId);
+    if (!l) return;
+    const it = l.items.find(x => x.id === itemId);
+    if (!it) return;
+    it.done = !it.done;
+    if (it.done && it.price == null) {
+      // Prompt curto pedindo preço — opcional, skipavel só clicando OK/cancelar
+      const raw = prompt(`Preço de "${it.name}" (opcional):`, '');
+      if (raw != null && raw.trim() !== '') {
+        const p = parseFloat(raw.replace(',', '.'));
+        if (Number.isFinite(p) && p >= 0) it.price = p;
+      }
+    }
+    _mktSave();
+    mktRender();
+  };
+  // Edita/adiciona preço de um item já marcado (toque na pill de preço)
+  window.mktSetPrice = function(itemId) {
+    const l = mktLists.find(x => x.id === _mktCurrentListId);
+    if (!l) return;
+    const it = l.items.find(x => x.id === itemId);
+    if (!it) return;
+    const curLbl = it.price != null ? String(it.price).replace('.', ',') : '';
+    const raw = prompt(`Preço de "${it.name}":`, curLbl);
+    if (raw == null) return;
+    const clean = raw.trim();
+    if (clean === '') { delete it.price; }
+    else {
+      const p = parseFloat(clean.replace(',', '.'));
+      if (Number.isFinite(p) && p >= 0) it.price = p;
+    }
+    _mktSave();
+    mktRender();
+  };
+  window.mktEditQty = function(itemId, val) {
+    const l = mktLists.find(x => x.id === _mktCurrentListId);
+    if (!l) return;
+    const it = l.items.find(x => x.id === itemId);
+    if (!it) return;
+    const n = parseFloat(val);
+    it.qty = Number.isFinite(n) && n >= 0 ? n : 0;
+    _mktSave();
+  };
+  window.mktDelItem = function(itemId) {
+    const l = mktLists.find(x => x.id === _mktCurrentListId);
+    if (!l) return;
+    l.items = l.items.filter(x => x.id !== itemId);
+    _mktSave();
+    mktRender();
+  };
+  window.mktClearDone = function() {
+    const l = mktLists.find(x => x.id === _mktCurrentListId);
+    if (!l) return;
+    const cnt = l.items.filter(i => i.done).length;
+    if (cnt === 0) { toast('Nada marcado pra limpar'); return; }
+    if (!confirm(`Remover ${cnt} item(ns) marcado(s) da lista?`)) return;
+    l.items = l.items.filter(i => !i.done);
+    _mktSave();
+    mktRender();
+  };
+  window.mktFinishShopping = function() {
+    const l = mktLists.find(x => x.id === _mktCurrentListId);
+    if (!l) return;
+    const doneItems = l.items.filter(i => i.done);
+    if (doneItems.length === 0) return;
+    const priced = doneItems.filter(i => typeof i.price === 'number');
+    const mercadoInput = prompt(`Finalizar? Opcional: nome do mercado (Assaí, Extra…):`, l.mercado || '');
+    if (mercadoInput === null) return;
+    const mercado = mercadoInput.trim() || null;
+    // Snapshot pra exportar depois (histórico do desktop)
+    mktArchives.push({
+      id: _mktUuid('ma_'),
+      listId: l.id,
+      listName: l.name,
+      finishedAt: new Date().toISOString(),
+      mercado: mercado || undefined,
+      items: doneItems.map(i => ({
+        name: i.name,
+        unit: i.unit || 'unid',
+        qty: i.qty || 1,
+        price: (typeof i.price === 'number') ? i.price : undefined,
+      })),
+    });
+    // Reseta pra próxima
+    l.items.forEach(i => { i.done = false; delete i.price; });
+    if (mercado) l.mercado = mercado;
+    _mktSave();
+    const total = priced.reduce((s, i) => s + (i.price * (i.qty || 1)), 0);
+    toast(`✓ Finalizada (${doneItems.length} itens${priced.length ? ' · R$ ' + total.toFixed(2).replace('.', ',') : ''})`);
+    mktRender();
+  };
+
+  // ── Export das compras finalizadas — JSON pra colar no desktop ────
+  window.mktExportOpen = function() {
+    const pending = mktArchives.filter(a => !a.exportedAt);
+    if (pending.length === 0) {
+      alert('Nenhuma compra pendente pra exportar. Finalize uma lista primeiro.');
+      return;
+    }
+    // Também envia itens novos do catálogo (criados aqui, ainda sem lastExport)
+    const newItems = mktCatalog
+      .filter(ci => !ci.exportedAt)
+      .map(ci => ({ name: ci.name, unitDefault: ci.unitDefault || 'unid' }));
+    const payload = {
+      kind: 'compras-mobile-export',
+      v: 1,
+      generatedAt: new Date().toISOString(),
+      finishedLists: pending.map(a => ({
+        id: a.id, listName: a.listName, finishedAt: a.finishedAt, mercado: a.mercado,
+        items: a.items,
+      })),
+      newItems,
+    };
+    const json = JSON.stringify(payload, null, 2);
+    // Mostra num sheet minimal (reusa DOM se possível)
+    let sheet = document.getElementById('mktExportSheet');
+    if (!sheet) {
+      sheet = document.createElement('div');
+      sheet.id = 'mktExportSheet';
+      sheet.className = 'mkt-overlay';
+      sheet.innerHTML = `
+        <div class="mkt-head">
+          <button class="mkt-head-btn" onclick="mktExportClose()">←</button>
+          <div class="mkt-title">📤 Exportar compras</div>
+          <button class="mkt-head-btn" onclick="mktExportClose()">✕</button>
+        </div>
+        <div class="mkt-body" style="display:flex;flex-direction:column;gap:10px">
+          <div style="color:var(--text3);font-size:.82rem">Copie o texto abaixo e cole no desktop em <b>🛒 Compras → 📥 Importar do mobile</b>.</div>
+          <textarea id="mktExportText" readonly style="flex:1;min-height:260px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px;font-family:monospace;font-size:.72rem;resize:none"></textarea>
+          <div style="display:flex;gap:8px">
+            <button class="mkt-btn primary" onclick="mktExportCopy()" style="flex:1">📋 Copiar</button>
+            <button class="mkt-btn" onclick="mktExportMarkSynced()" style="flex:1">✓ Marcar como enviado</button>
+          </div>
+        </div>`;
+      document.body.appendChild(sheet);
+    }
+    document.getElementById('mktExportText').value = json;
+    sheet.classList.add('open');
+  };
+  window.mktExportClose = function() {
+    document.getElementById('mktExportSheet')?.classList.remove('open');
+  };
+  window.mktExportCopy = async function() {
+    const ta = document.getElementById('mktExportText');
+    if (!ta) return;
+    try {
+      await navigator.clipboard.writeText(ta.value);
+      toast('📋 Copiado');
+    } catch {
+      ta.select();
+      document.execCommand('copy');
+      toast('📋 Copiado');
+    }
+  };
+  window.mktExportMarkSynced = function() {
+    const now = new Date().toISOString();
+    mktArchives.forEach(a => { if (!a.exportedAt) a.exportedAt = now; });
+    mktCatalog.forEach(ci => { if (!ci.exportedAt) ci.exportedAt = now; });
+    _mktSave();
+    toast('✓ Marcados como enviados');
+    mktExportClose();
+  };
+
+  // ── Aba Itens (catálogo) ────────────────────────────────────────
+  function _mktRenderCatalogView() {
+    const sorted = mktCatalog.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt'));
+    if (sorted.length === 0) {
+      return `<div class="mkt-add-bar">
+          <input type="text" id="mktCatAddInput" class="mkt-add-input" placeholder="Nome do item (ex: Arroz)"
+                 onkeydown="if(event.key==='Enter'){event.preventDefault();mktCatAddSubmit();}">
+          <select class="mkt-add-unit" id="mktCatAddUnit">
+            ${MKT_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}
+          </select>
+          <button class="mkt-add-btn" onclick="mktCatAddSubmit()">＋</button>
+        </div>
+        <div class="mkt-empty">Catálogo vazio.<br>Adicione itens acima ou cadastre direto na lista de compras.</div>`;
+    }
+    const rows = sorted.map(ci => `<div class="mkt-item" data-cat-id="${ci.id}">
+      <div class="mkt-item-name">${esc(ci.name)}</div>
+      <span class="mkt-item-unit">${esc(ci.unitDefault || 'unid')}</span>
+      <button class="mkt-item-del" onclick="mktCatDel('${ci.id}')" title="Remover">✕</button>
+    </div>`).join('');
+    return `<div class="mkt-add-bar">
+        <input type="text" id="mktCatAddInput" class="mkt-add-input" placeholder="Nome do item (ex: Arroz)"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();mktCatAddSubmit();}">
+        <select class="mkt-add-unit" id="mktCatAddUnit">
+          ${MKT_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}
+        </select>
+        <button class="mkt-add-btn" onclick="mktCatAddSubmit()">＋</button>
+      </div>
+      ${rows}`;
+  }
+  function _mktBindCatalogHandlers() { /* placeholder */ }
+  window.mktCatAddSubmit = function() {
+    const inp = document.getElementById('mktCatAddInput');
+    const unitSel = document.getElementById('mktCatAddUnit');
+    const name = (inp?.value || '').trim();
+    if (!name) return;
+    const item = _mktAddToCatalog(name, unitSel?.value || 'unid');
+    _mktSave();
+    if (inp) inp.value = '';
+    mktRender();
+    setTimeout(() => document.getElementById('mktCatAddInput')?.focus(), 30);
+  };
+  window.mktCatDel = function(id) {
+    const ci = mktCatalog.find(x => x.id === id);
+    if (!ci) return;
+    if (!confirm(`Remover "${ci.name}" do catálogo? (Não remove das listas existentes.)`)) return;
+    mktCatalog = mktCatalog.filter(x => x.id !== id);
+    _mktSave();
+    mktRender();
+  };
 
   // ─── Boot: hash > cronograma cacheado > vazio ─────────────────
   (async function init() {
