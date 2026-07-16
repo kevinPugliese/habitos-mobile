@@ -119,8 +119,8 @@
   .bottom-btn.primary {
     background: var(--accent); border-color: var(--accent); color: #fff;
   }
-  .bottom-btn-ico { font-size: 1.4rem; line-height: 1; }
-  .bottom-btn-lbl { font-size: .92rem; }
+  .bottom-btn-ico { font-size: 1.7rem; line-height: 1; }
+  .bottom-btn-lbl { display: none; }
 
   /* ─── Mercado (fullscreen overlay) ─── */
   .mkt-overlay {
@@ -653,6 +653,12 @@
   .wk-ex-name { font-weight: 700; font-size: .95rem; flex: 1; min-width: 0; }
   .wk-ex-mg { font-size: .72rem; color: var(--text3); }
   .wk-ex-rest { font-size: .68rem; color: var(--text3); margin-top: 2px; }
+  .wk-ex-rm {
+    background: transparent; border: 1px solid var(--border); color: var(--text3);
+    border-radius: 6px; padding: 4px 8px; font-size: .82rem; cursor: pointer;
+    font-family: inherit;
+  }
+  .wk-ex-rm:active { color: #f87171; border-color: #f87171; }
   .wk-set-row {
     display: grid; grid-template-columns: 28px 1fr 1fr 38px 32px; gap: 6px;
     align-items: center; padding: 6px 0;
@@ -1229,15 +1235,43 @@
   // ─── Estado adicional: ad-hoc tasks ────────────────────────────
   let adhocTasks = []; // [{ id, text, score, done, doneAt?, createdAt }]
 
-  function adhocKey(date) { return 'mobileAdhoc:' + date; }
+  // Chave global — as tarefas ad-hoc do mobile agora PERSISTEM entre dias.
+  // O usuário controla quando remover; virar o dia não apaga nada.
+  const ADHOC_GLOBAL_KEY = 'mobileAdhoc:all';
 
-  function loadAdhoc(date) {
-    try { adhocTasks = JSON.parse(localStorage.getItem(adhocKey(date)) || '[]'); }
+  function loadAdhoc(_date) {
+    try { adhocTasks = JSON.parse(localStorage.getItem(ADHOC_GLOBAL_KEY) || '[]'); }
     catch { adhocTasks = []; }
     if (!Array.isArray(adhocTasks)) adhocTasks = [];
+    // Migração one-shot: se o global tá vazio, coleta tudo das chaves legadas
+    // "mobileAdhoc:YYYY-MM-DD" (dedup por id) e salva no global.
+    if (adhocTasks.length === 0 && !localStorage.getItem(ADHOC_GLOBAL_KEY + ':migrated')) {
+      const seen = new Set();
+      const collected = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k || !k.startsWith('mobileAdhoc:') || k === ADHOC_GLOBAL_KEY || k.endsWith(':migrated')) continue;
+        try {
+          const arr = JSON.parse(localStorage.getItem(k) || '[]');
+          if (!Array.isArray(arr)) continue;
+          for (const t of arr) {
+            if (!t || !t.id || seen.has(t.id)) continue;
+            seen.add(t.id);
+            collected.push(t);
+          }
+        } catch {}
+      }
+      if (collected.length) {
+        adhocTasks = collected;
+        try {
+          localStorage.setItem(ADHOC_GLOBAL_KEY, JSON.stringify(adhocTasks));
+          localStorage.setItem(ADHOC_GLOBAL_KEY + ':migrated', '1');
+        } catch {}
+      }
+    }
   }
-  function saveAdhocList(date) {
-    try { localStorage.setItem(adhocKey(date), JSON.stringify(adhocTasks)); } catch {}
+  function saveAdhocList(_date) {
+    try { localStorage.setItem(ADHOC_GLOBAL_KEY, JSON.stringify(adhocTasks)); } catch {}
   }
 
   // ─── Render principal ──────────────────────────────────────────
@@ -1937,6 +1971,7 @@
             <div class="wk-ex-name">${esc(ex.n)}</div>
           </div>
           <div class="wk-ex-rest">Descanso: <input class="wk-rest-input" type="number" inputmode="numeric" step="5" min="0" value="${ex.rs}" onchange="wkExRest(${exIx},this.value)">s</div>
+          <button class="wk-ex-rm" onclick="wkExRemoveOnce(${exIx})" title="Remover exercício só desta sessão (não altera o template)">✕</button>
         </div>
         ${setsHtml}
         <div class="wk-ex-actions">
@@ -2157,6 +2192,17 @@
     const n = parseInt(val, 10);
     ex.rs = Number.isFinite(n) && n >= 0 ? n : 90;
     saveWkState();
+  };
+  // Remove um exercício APENAS desta sessão de hoje. Não altera o template
+  // (view.wk continua com todos). Amanhã volta pelo cronograma normal.
+  window.wkExRemoveOnce = function (exIx) {
+    if (!wkState) return;
+    const ex = wkState.exs[exIx]; if (!ex) return;
+    if (!confirm(`Remover "${ex.n}" só desta sessão?\n(Amanhã o exercício volta normalmente pelo template.)`)) return;
+    wkState.exs.splice(exIx, 1);
+    saveWkState();
+    renderWkExec();
+    toast(`✕ ${ex.n} removido desta sessão`);
   };
   window.wkExResetAutofill = function (exIx) {
     if (!wkState || !view || !view.wk) return;
